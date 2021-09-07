@@ -1,0 +1,27 @@
+{
+  "python.linting.flake8Enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.flake8Args": [
+    "--max-line-length=110",
+    "--ignore=E231,E261,W292,E302,E701,E225,W191,E128,E228,E401,E704,W504,E226,E722,E702,E301,E265,E306,E251",
+  ],
+}
+// E231 missing whitespace after ','
+// E261 at least two spaces before inline comment
+// W292 no newline at end of file
+// E302 expected 2 blank lines, found 1
+// E701 multiple statements on one line (colon)
+// E225 missing whitespace around operator
+// W191 indentation contains tabs
+// E128 continuation line under-indented for visual indent
+// E228 missing whitespace around modulo operator
+// E401 multiple imports on one line
+// E704 multiple statements on one line (def)
+// W504 line break after binary operator
+// E226 missing whitespace around arithmetic operator
+// E722 do not use bare 'except'
+// E702 multiple statements on one line (semicolon)
+// E301 expected 1 blank line, found 0
+// E265 block comment should start with '# '
+// E306 expected 1 blank line before a nested definition, found 0
+// E251 unexpected spaces around keyword / parameter equals
