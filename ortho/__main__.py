@@ -15,24 +15,16 @@ import shutil
 
 from .reexec import interact
 
-def boilerplate_develop(output):
-	"""
-	Write a boilerplate development script.
-	"""
-	output_fn = os.path.expanduser(os.path.realpath(output))
-	if os.path.isfile(output):
-		raise Exception(f'file exists: {output_fn}')
-	source_fn = os.path.join(os.path.dirname(__file__),
-		'boilerplate_develop.txt')
-	if not os.path.isfile(source_fn):
-		raise Exception('cannot locate source '+source_fn)
-	shutil.copyfile(source_fn,output_fn)
-	print(f'status copied {source_fn} to {output_fn}')
-	return True
-
 def interact_router(script):
 	"""Route module runpy requests for interactive mode to ortho."""
 	return interact(script=script)
+
+def boilerplate_cli():
+	"""Report a basic boilerplate CLI with instructions."""
+	with open(os.path.join(
+		os.path.dirname(__file__),'cli_example.txt')) as fp:
+		text = fp.read()
+		print(text)
 
 cli_toc = {
 	'interact':{
@@ -44,7 +36,11 @@ cli_toc = {
 			(('-i',),dict(
 				dest='script',
 				help='Target script.',
-				required=True),),]},}
+				required=True),),]},
+	'boilerplate_cli':{
+		'func':boilerplate_cli,
+		'parser':dict(
+			name='boilerplate_cli',),},}
 
 if __name__ == '__main__':
 
@@ -56,10 +52,11 @@ if __name__ == '__main__':
 
 	subparsers_toc = {}
 	for name,detail in cli_toc.items():
-		subparser = subparsers_toc[name] = subparsers.add_parser(
+		print(name)
+		subparsers_toc[name] = subparsers.add_parser(
 			**detail['parser'])
-		for args,kwargs in detail['args']:
-			subparser.add_argument(*args,**kwargs)
+		for args,kwargs in detail.pop('args',[]):
+			subparsers_toc[name].add_argument(*args,**kwargs)
 	
 	# parse arguments
 	args = parser_parent.parse_args()

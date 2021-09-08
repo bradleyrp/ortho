@@ -7,6 +7,7 @@ import ast
 import readline
 import rlcompleter
 import traceback
+import code
 
 def say(text,*flags):
 	"""Colorize the text."""
@@ -301,3 +302,39 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	# interact
 	msg = kwargs.get('msg','(interactive mode)')
 	code.interact(local=vars,banner=msg)
+
+def debugger():
+	"""Automatic debugger. Add this to an exception to debug on errors."""
+	# via https://stackoverflow.com/a/242514/3313859
+	type, value, tb = sys.exc_info()
+	traceback.print_exc()
+	last_frame = lambda tb=tb: last_frame(tb.tb_next) if tb.tb_next else tb
+	frame = last_frame().tb_frame
+	ns = dict(frame.f_globals)
+	ns.update(frame.f_locals)
+	# include tab completion here
+	readline.set_completer(rlcompleter.Completer(ns).complete)
+	readline.parse_and_bind("tab: complete")
+	# let the user know they are debugging
+	msg = "(auto debug in place)"
+	code.interact(local=ns,banner=msg)
+
+def debugger_click(func):
+	"""
+	Decorator which sends the user to an interactive session whenever an 
+	exception is encountered as long as the click context which is sent as the
+	first argument includes a DEBUG boolean.
+	"""
+	def wrapper(ctx,*args,**kwargs):
+		"""Wall thickness calculations."""
+		# run the function
+		try:
+			result = func(ctx,*args,**kwargs)
+		# option to use the debugger if we have ortho
+		except:
+			if ctx.obj['DEBUG']:
+				debugger()
+			else: raise
+		return result
+	wrapper.__name__ = func.__name__
+	return wrapper
