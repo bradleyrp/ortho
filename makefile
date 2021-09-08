@@ -1,10 +1,10 @@
 # makefile shortcuts
-.PHONY: develop install check clean remove
+.PHONY: develop install check clean remove docs readdocs
 NAME = ortho
 develop:
-	pip install -e .
+	pip install -e '.[docs,cli]'
 install:
-	pip install .
+	pip install '.[docs,cli]'
 check:
 	python -c 'import ${NAME}'
 clean:
@@ -14,3 +14,7 @@ clean:
 	find . -name "*.pyc" -type f -exec rm {} \; || :
 remove:
 	pip uninstall ${NAME} -y
+docs:
+	make -C docs html -b
+readdocs:
+	open docs/build/html/index.html

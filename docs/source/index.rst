@@ -8,9 +8,15 @@ Welcome to ortho's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :numbered:
    :caption: Contents:
+   :glob:
 
+.. 
+   autodoc works when you include an automodule below
 
+.. automodule:: ortho
+   :members:
 
 Indices and tables
 ==================

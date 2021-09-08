@@ -21,9 +21,10 @@ project = 'ortho'
 copyright = '2021, Ryan Patrick Bradley'
 author = 'Ryan Patrick Bradley'
 
-# The full version, including alpha/beta/rc tags
-release = '0.1'
-
+# we use major.minor to mark the releases
+from pkg_resources import get_distribution
+release_raw = get_distribution(project).version
+release = '.'.join(release_raw.split('.')[:2])
 
 # -- General configuration ---------------------------------------------------
 
@@ -31,6 +32,9 @@ release = '0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+	'sphinx.ext.autodoc',
+	'numpydoc',
+	'sphinx.ext.coverage',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -54,9 +58,21 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = ['alabaster','bizstyle'][-1]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+from sphinx.ext import autodoc
+class SimpleDocumenter(autodoc.MethodDocumenter):
+  objtype = "simple"
+  # do not add a header to the docstring
+  def add_directive_header(self, sig): pass
+def setup(app):
+  app.add_autodocumenter(SimpleDocumenter)
+
+import ortho
+
+coverage_show_missing_items = True
