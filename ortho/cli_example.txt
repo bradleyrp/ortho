@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+# vim: noet:ts=4:sts=4:sw=4
+
+"""
+Command line interface (CLI) for a generic package.
+
+This root-level module exposes functions to the command line. To use this
+method, include the following `__main__.py`:
+
+#!/usr/bin/env python
+from .cli import cli_hook
+# hook the CLI to runpy for this package
+if __name__ == '__main__': cli_hook()
+
+You can also connect this to a console script in `setup.cfg` with:
+
+[options.entry_points]
+console_scripts =
+	<bin_name> = <my_package>.__main__:cli_hook
+
+These ingredients will enable the use of `python -m my_package <args>` along
+with `<bin_name> <args>` from the terminal.
+"""
+
+import sys
+import traceback
+import code
+
+try: import click
+except: 
+	print('status: failed to import click. install it to continue or '
+		'consult the extras_require for this package')
+	sys.exit(1)
+
+# use the click debugger if ortho is available
+from . import ortho
+if ortho: debug_click = ortho.ortho_debugger_click
+else: debug_click = lambda x: x
+
+@click.group()
+@click.help_option('-h','--help')
+@click.option('--debug/--no-debug',default=False)
+@click.pass_context
+def cli(ctx,debug):
+	# via https://click.palletsprojects.com/en/8.0.x/commands/
+	# ensure that ctx.obj exists and is a dict in case `cli` is called elsewhere
+	ctx.ensure_object(dict)
+	ctx.obj['DEBUG'] = debug
+
+@cli.command()
+@click.argument('a')
+@click.argument('b')
+@click.help_option('-h','--help')
+@click.pass_context
+@debug_click
+def compute_something(ctx,a,b):
+	"""Example calculation."""
+	# wrap a preexisting function
+	return example_compute_something(a=a,b=b)
+
+def cli_hook():
+	"""Expose the CLI to __main__ and/or console_scripts."""
+	cli(obj={})
