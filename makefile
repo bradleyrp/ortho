@@ -15,6 +15,7 @@ clean:
 remove:
 	pip uninstall ${NAME} -y
 docs:
-	make -C docs html -b
+	make -C docs html -b coverage
+	cat docs/build/coverage/python.txt
 readdocs:
 	open docs/build/html/index.html
