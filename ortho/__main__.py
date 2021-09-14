@@ -26,6 +26,7 @@ def boilerplate_cli():
 		text = fp.read()
 		print(text)
 
+# index of exposed functions
 cli_toc = {
 	'interact':{
 		'func':interact_router,
@@ -52,14 +53,18 @@ if __name__ == '__main__':
 
 	subparsers_toc = {}
 	for name,detail in cli_toc.items():
-		print(name)
 		subparsers_toc[name] = subparsers.add_parser(
 			**detail['parser'])
 		for args,kwargs in detail.pop('args',[]):
 			subparsers_toc[name].add_argument(*args,**kwargs)
 	
-	# parse arguments
-	args = parser_parent.parse_args()
+	# parse known arguments
+	args,_ = parser_parent.parse_known_args()
+	# we only parse known arguments in case you use argparser in the development
+	#   script. you would also need to use `parse_known_args` there. functions
+	#   which are later added to a package should be given their own parsers.
+	#   note that the author prefers click. see an example from the command:
+	#   `python -m ortho boilerplate_cli`
 
 	if not args.subparser_name:
 		parser_parent.print_help()
