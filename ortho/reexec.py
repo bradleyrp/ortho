@@ -326,7 +326,10 @@ def debugger_click(func):
 	first argument includes a DEBUG boolean.
 	"""
 	def wrapper(ctx,*args,**kwargs):
-		"""Wall thickness calculations."""
+		"""
+		Wrap a CLI function with the debugger so that a flag can trigger 
+		in-place interactive debugging.
+		"""
 		# run the function
 		try:
 			result = func(ctx,*args,**kwargs)
@@ -337,4 +340,5 @@ def debugger_click(func):
 			else: raise
 		return result
 	wrapper.__name__ = func.__name__
+	wrapper.__doc__ = func.__doc__
 	return wrapper
