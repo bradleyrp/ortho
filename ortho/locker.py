@@ -5,6 +5,13 @@ import time
 import os
 import fcntl
 import errno
+import datetime as dt
+import copy
+import json
+
+# click is part of the cli extra for ortho
+try: import click
+except: click = None
 
 class SimpleFlock:
 	"""
@@ -63,7 +70,7 @@ def state_user(statefile='state.yml',
 	def repack_state(outgoing,statefile_out,fname,state_ptr):
 		"""Write the state to the statefile."""
 		if outgoing is None:
-			print('111')
+			# the outgoing dict is a pointer to the state we unpacked
 			outgoing = state_ptr	
 		elif not isinstance(outgoing,dict):
 			print('error: outgoing object: %s'%str(outgoing))
@@ -78,7 +85,7 @@ def state_user(statefile='state.yml',
 		def inner(*args,**kwargs):
 			# accept the click context as the leading argument in case we are
 			#   using the context to convey the statefile as a CLI argument
-			if len(args)>0 and isinstance(args[0],click.core.Context):
+			if click and len(args)>0 and isinstance(args[0],click.core.Context):
 				if 'ctx' in kwargs:
 					raise Exception('name collision on "ctx" when we move the '
 						'click context to kwargs')
@@ -110,6 +117,7 @@ def state_user(statefile='state.yml',
 						if not state_data: state_data = {}
 				# load the state data into the destination kwarg
 				kwargs[dest] = state_data
+				print(id(state_data))
 			# separate locking and logging features
 			if log and not lock:
 				raise Exception('you must lock if you log')
@@ -175,3 +183,19 @@ def state_user(statefile='state.yml',
 		inner.__doc__ = func.__doc__
 		return inner
 	return wrapper
+
+def element_cli(func_real):
+	"""
+	Decorator used to separate the CLI interface from the elements.
+	This decorator replaces the decorated function with the argument (which should be a function) so that we
+	can separate the click CLI interface from the function itself. This facilitates modular code.	
+	"""
+	def outer(func):
+		def inner(*args,**kwargs):
+			# dev: check that func_real is a function?
+			return func_real(*args,**kwargs)
+		inner.__name__ = func_real.__name__
+		inner.__doc__ = func_real.__doc__
+		return inner
+	return outer
+
