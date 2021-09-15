@@ -37,6 +37,8 @@ from . import ortho
 if ortho: debug_click = ortho.ortho_debugger_click
 else: debug_click = lambda x: x
 
+### INTERFACE
+
 @click.group()
 @click.help_option('-h','--help')
 @click.option('--debug/--no-debug',default=False)
@@ -58,6 +60,46 @@ def compute_something(ctx,a,b):
 	# wrap a preexisting function
 	return example_compute_something(a=a,b=b)
 
+### MAIN
+
 def cli_hook():
 	"""Expose the CLI to __main__ and/or console_scripts."""
 	cli(obj={})
+
+# EXTRA 1: use the state_user function to manage a generic state file
+
+from ortho import SimpleFlock,state_user
+
+@cli.command()
+@click.help_option('-h','--help')
+@click.pass_context
+@debug_click
+@state_user(lock=True,log=True,unpack=True,dest='state')
+def check(state):
+	"""
+	Check the local config.
+	"""
+	report = pprint.pformat(dict(state=state,cwd=os.getcwd()))
+	print(f'status: incoming: {report}')
+	state['hello'] = 'iamryan'
+
+def _check(statefile,**kwargs):
+	with SimpleFlock(
+		f'.{statefile}.lock',timeout=3) as sf:
+		print(f'status: locked on {statefile}')
+		with open(statefile,'r') as fp:
+			state = yaml.load(fp,Loader=yaml.SafeLoader)
+			if not state: state = {}
+		state.update(**kwargs)
+		pprint.pprint(state)
+		with open(statefile,'w') as fp:
+			state = yaml.dump(state,fp)
+		print('status: releasing lock')
+
+@cli.command()
+@click.help_option('-h','--help')
+@click.pass_context
+@debug_click
+@optima_state()
+def check_alternate(statefile):
+	return _check(statefile=statefile,record_this='information_here')
