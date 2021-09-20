@@ -185,19 +185,3 @@ def state_user(statefile='state.yml',
 		inner.__doc__ = func.__doc__
 		return inner
 	return wrapper
-
-def element_cli(func_real):
-	"""
-	Decorator used to separate the CLI interface from the elements.
-	This decorator replaces the decorated function with the argument (which should be a function) so that we
-	can separate the click CLI interface from the function itself. This facilitates modular code.	
-	"""
-	def outer(func):
-		def inner(*args,**kwargs):
-			# dev: check that func_real is a function?
-			return func_real(*args,**kwargs)
-		inner.__name__ = func_real.__name__
-		inner.__doc__ = func_real.__doc__
-		return inner
-	return outer
-

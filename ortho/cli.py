@@ -44,3 +44,21 @@ def click_args_to_kwargs(args_kw='args'):
 		inner.__doc__ = func.__doc__
 		return inner
 	return outer
+
+def element_cli(func_real):
+	"""
+	Decorator used to separate the CLI interface from the elements.
+	This decorator replaces the decorated function with the argument (which should be a function) so that we
+	can separate the click CLI interface from the function itself. This facilitates modular code.	
+	"""
+	def outer(func):
+		def inner(*args,**kwargs):
+			# dev: check that func_real is a function?
+			return func_real(*args,**kwargs)
+		# crucially we use the name of the dummy function as the exposed name
+		#   which means that you can rename the function where it is decorated
+		#   with other click functions
+		inner.__name__ = func.__name__
+		inner.__doc__ = func_real.__doc__
+		return inner
+	return outer

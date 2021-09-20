@@ -3,17 +3,18 @@
 
 __all__ = [
 	'version',
-	'ortho_interact',
+	'interact',
 	'print_function','ortho_print',
-	'ortho_debugger','ortho_debugger_click',
-	'state_user','SimpleFlock','element_cli']
+	'debugger','debugger_click',
+	'state_user','SimpleFlock',
+	'element_cli']
 
 from ._version import version
-from .reexec import interact as ortho_interact
-from .reexec import debugger as ortho_debugger
-from .reexec import debugger_click as ortho_debugger_click
+from .reexec import interact as interact
+from .reexec import debugger as debugger
+from .reexec import debugger_click as debugger_click
 from .logs import stylized_print as ortho_print
 from .locker import state_user
 from .locker import SimpleFlock
-from .locker import element_cli
+from .cli import element_cli
 from .utils import catalog
