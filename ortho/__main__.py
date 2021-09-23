@@ -13,11 +13,15 @@ import os
 import argparse
 import shutil
 
-from .reexec import interact
+from .reexec import interact,debugger
 
-def interact_router(script):
+def interact_router(script,debug=False):
 	"""Route module runpy requests for interactive mode to ortho."""
-	return interact(script=script)
+	try: this = interact(script=script)
+	except: 
+		if debug: debugger()
+		else: raise
+	return this
 
 def boilerplate_cli():
 	"""Report a basic boilerplate CLI with instructions."""
@@ -37,7 +41,12 @@ cli_toc = {
 			(('-i',),dict(
 				dest='script',
 				help='Target script.',
-				required=True),),]},
+				required=True)),
+			(('-d','--debug',),dict(
+				dest='debug',
+				help='Enable on-site debugging.',
+				action='store_true',
+				required=False)),]},
 	'boilerplate_cli':{
 		'func':boilerplate_cli,
 		'parser':dict(

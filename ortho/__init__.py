@@ -7,7 +7,9 @@ __all__ = [
 	'print_function','ortho_print',
 	'debugger','debugger_click',
 	'state_user','SimpleFlock',
-	'element_cli']
+	'element_cli',
+	'script_packer',
+	'Struct']
 
 from ._version import version
 from .reexec import interact as interact
@@ -18,3 +20,7 @@ from .locker import state_user
 from .locker import SimpleFlock
 from .cli import element_cli
 from .utils import catalog
+from .utils import script_packer
+from .utils import Struct
+from .utils import get_cpu_cores
+from .diagnose import linetime
