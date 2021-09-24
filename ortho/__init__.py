@@ -9,7 +9,8 @@ __all__ = [
 	'state_user','SimpleFlock',
 	'element_cli',
 	'script_packer',
-	'Struct']
+	'Struct',
+	'bash']
 
 from ._version import version
 from .reexec import interact as interact
@@ -24,3 +25,4 @@ from .utils import script_packer
 from .utils import Struct
 from .utils import get_cpu_cores
 from .diagnose import linetime
+from .bash import bash

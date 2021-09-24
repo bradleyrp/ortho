@@ -8,6 +8,7 @@ import readline
 import rlcompleter
 import traceback
 import code
+import pprint
 
 def say(text,*flags):
 	"""Colorize the text."""
@@ -349,7 +350,7 @@ def debugger():
 	msg = "(auto debug in place)"
 	code.interact(local=ns,banner=msg)
 
-def debugger_click(func):
+def debugger_click(func,with_ctx=False):
 	"""
 	Decorator which sends the user to an interactive session whenever an 
 	exception is encountered as long as the click context which is sent as the
@@ -362,9 +363,12 @@ def debugger_click(func):
 		"""
 		# run the function
 		try:
-			result = func(ctx,*args,**kwargs)
+			if with_ctx: result = func(ctx,*args,**kwargs)
+			else: result = func(*args,**kwargs)
 		# option to use the debugger if we have ortho
 		except:
+			detail = pprint.pformat(dict(args=args,kwargs=kwargs))
+			print(f'warning: call to {func.__name__}: {detail}')
 			if ctx.obj['DEBUG']:
 				debugger()
 			else: raise
