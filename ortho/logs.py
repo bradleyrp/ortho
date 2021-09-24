@@ -64,3 +64,4 @@ def stylized_print(override=False):
 		#   while any python 2 code that wishes to use overloaded print
 		#   must of course from __future__ import print_function
 		builtins.print = print_stylized
+		builtins._print_std = _print

@@ -91,6 +91,11 @@ class ReExec:
 	# naming conventions for commands in the interactive development environment
 	_names = {
 		# reimport all modules
+		# critical note: if you use `reimport`, you must also use `go` in order
+		#   to actually reuse the code. we are not sure why this happens, 
+		#   however, `reimport;go` with `pdb.set_trace` in the reimported 
+		#   modules works perfectly and is a major help during development
+		# dev: document the critical note above and investigate the root cause
 		'reload':'reimport',
 		# the "do" function runs the entire script again, however this can be
 		#   very useful when using the `if 'variable' in globals():` method
@@ -168,14 +173,16 @@ class ReExec:
 		# canny way to handle exceptions below. all exceptions visit this
 		try: exec(self.text,out,out)
 		except Exception as e: tracebacker(e)
-	def reload_DEV(self):
+	def reload(self):
 		global preloaded_mods
 		preloaded_names = [i.__name__ for i in preloaded_mods]
 		# dev: hardcoded excludes due to numpy errors
-		# dev: add to excludes with a command somewhere
-		excludes = ['^numpy','^pyexpat','^_cython_.+']
-		excludes = ['^numpy',]
-		excludes = []
+		# numpy does not like to be reimported. when we use `reimport;go` inside
+		#   of an interactive session, we see "ValueError: Only callable can be 
+		#   used as callback" coming from `numpy/core/_ufunc_config.py` whenever
+		#   we try to look at numpy objects in the debugger. we prevent
+		#   reimports here
+		excludes = ['^numpy']
 		import importlib
 		mods_loaded = list(sys.modules.values())
 		failures = []
@@ -186,31 +193,14 @@ class ReExec:
 				skips.append(module.__name__)
 				continue
 			# dev: see above. temporarily removed
-			if 0:
-				if any(re.match(regex,module.__name__) 
-					for regex in excludes):
-					continue
+			if any(re.match(regex,module.__name__) 
+				for regex in excludes):
+				continue
 			try:
-				print('reloading %s'%str(module))
 				importlib.reload(module)
 				reloaded.append(module.__name__)
 			except: 
 				failures.append(module.__name__)
-		if failures:
-			print('warning','failed to reload: '+', '.join(failures))
-	def reload(self):
-		global preloaded_mods
-		preloaded_names = [i.__name__ for i in preloaded_mods]
-		import importlib
-		mods_loaded = list(sys.modules.values())
-		failures = []
-		reloaded = []
-		for module in mods_loaded:
-			if module.__name__ in preloaded_names: continue
-			try:
-				importlib.reload(module)
-				reloaded.append(module.__name__)
-			except: failures.append(module.__name__)
 		if failures:
 			print('warning','failed to reload: '+', '.join(failures))
 
