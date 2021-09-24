@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+"""
+Diagnostic tools for monitoring execution.
+"""
+
 import timeit
 class linetime:
 	"""Measuring timing for a block of code."""

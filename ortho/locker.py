@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+"""
+Locker tools for managing the state and file locks.
+"""
+
 import time
 import os
 import fcntl

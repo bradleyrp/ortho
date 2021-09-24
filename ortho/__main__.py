@@ -17,11 +17,12 @@ from .reexec import interact,debugger
 
 def interact_router(script,debug=False):
 	"""Route module runpy requests for interactive mode to ortho."""
-	try: this = interact(script=script)
+	try: 
+		this = interact(script=script)
+		return this
 	except: 
 		if debug: debugger()
 		else: raise
-	return this
 
 def boilerplate_cli():
 	"""Report a basic boilerplate CLI with instructions."""

@@ -10,7 +10,7 @@ __all__ = [
 	'element_cli',
 	'script_packer',
 	'Struct',
-	'bash']
+	'bash','bash_legacy']
 
 from ._version import version
 from .reexec import interact as interact
@@ -25,4 +25,4 @@ from .utils import script_packer
 from .utils import Struct
 from .utils import get_cpu_cores
 from .diagnose import linetime
-from .bash import bash
+from .bash import bash,bash_legacy,bash_basic

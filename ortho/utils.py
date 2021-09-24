@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+"""
+Utilities catchall.
+"""
+
 import os
 import psutil
 import pprint
