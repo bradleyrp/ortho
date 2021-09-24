@@ -168,6 +168,36 @@ class ReExec:
 		# canny way to handle exceptions below. all exceptions visit this
 		try: exec(self.text,out,out)
 		except Exception as e: tracebacker(e)
+	def reload_DEV(self):
+		global preloaded_mods
+		preloaded_names = [i.__name__ for i in preloaded_mods]
+		# dev: hardcoded excludes due to numpy errors
+		# dev: add to excludes with a command somewhere
+		excludes = ['^numpy','^pyexpat','^_cython_.+']
+		excludes = ['^numpy',]
+		excludes = []
+		import importlib
+		mods_loaded = list(sys.modules.values())
+		failures = []
+		reloaded = []
+		skips = []
+		for module in mods_loaded:
+			if module.__name__ in preloaded_names: 
+				skips.append(module.__name__)
+				continue
+			# dev: see above. temporarily removed
+			if 0:
+				if any(re.match(regex,module.__name__) 
+					for regex in excludes):
+					continue
+			try:
+				print('reloading %s'%str(module))
+				importlib.reload(module)
+				reloaded.append(module.__name__)
+			except: 
+				failures.append(module.__name__)
+		if failures:
+			print('warning','failed to reload: '+', '.join(failures))
 	def reload(self):
 		global preloaded_mods
 		preloaded_names = [i.__name__ for i in preloaded_mods]
@@ -208,6 +238,16 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	`reload`, `repeat`) which streamline development of complex scripts that
 	require lots of calculation. This effectively takes the place of a debugger,
 	however it provides a more native coding experience.
+
+	dev: start with an error and go nowhere
+		a fatal flaw here is that running a script with an error in it on the 
+		first execution then you cannot rerun things because you get the
+		auto-debugger. in fact the auto-debugger prevents you from continuing
+		to run anything, so errors are fatal before you complete one execution
+	dev: when we add a pdb.set_trace to a reimport library we cannot run 
+		commands inside the trace:
+			ValueError: Only callable can be used as callback
+		this means we cannot easily debug and return to interact
 	"""
 	module_host = kwargs.get('module_host',None)
 	# save preloaded modules
