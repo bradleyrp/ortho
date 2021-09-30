@@ -245,6 +245,7 @@ def interact(script='dev.py',hooks=None,**kwargs):
 		this means we cannot easily debug and return to interact
 	"""
 	module_host = kwargs.get('module_host',None)
+	onward_kwargs = kwargs.get('onward',{})
 	# save preloaded modules
 	from sys import modules
 	global preloaded_mods
@@ -256,6 +257,9 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	reexec_class = kwargs.pop('reexec_class',ReExec)
 	# previous method: os.system('python -i %s'%(script))
 	out = globals()
+	# allow onward args to be added here
+	# dev: document this use-case from atgizmo.core.thick.cli
+	out.update(**onward_kwargs)
 	# allow for flexible command names in the terminal
 	for key in ['do','redo','reload']:
 		if key in kwargs:
@@ -279,6 +283,8 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	out['__name__'] = '__main__'
 	# compatible version of execfile
 	# dev: exec to eval for python <2.7.15. see note above
+	# dev: the following cannot encounter exceptions or we exit. this means that
+	#   when you start an interact session, the code must be basically perfect
 	eval(compile(open(script).read(),filename=script,mode='exec'),out,out)
 	# prepare the interactive session
 	import code
@@ -368,11 +374,13 @@ def debugger_click(func,with_ctx=False):
 		# run the function
 		try:
 			if with_ctx: result = func(ctx,*args,**kwargs)
+			# dev: when doing a traceback, indicate that "string" means we are
+			#   executing a script interactively for clarity
 			else: result = func(*args,**kwargs)
 		# option to use the debugger if we have ortho
 		except:
 			detail = pprint.pformat(dict(args=args,kwargs=kwargs))
-			print(f'warning: call to {func.__name__}: {detail}')
+			print(f'debugging call to {func.__name__}: {detail}')
 			if ctx.obj['DEBUG']:
 				debugger()
 			else: raise
