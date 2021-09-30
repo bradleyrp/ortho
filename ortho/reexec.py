@@ -281,6 +281,10 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	#   one that is symmetric, simulating the act of stepping through code while
 	#   still retaining the native coding experience
 	out['__name__'] = '__main__'
+	# let the script know we are ortho in case that is useful when building a
+	#   script that could run with regular CLI arguments or with hardcoded
+	#   tests during development
+	out['___is_ortho'] = True
 	# compatible version of execfile
 	# dev: exec to eval for python <2.7.15. see note above
 	# dev: the following cannot encounter exceptions or we exit. this means that
