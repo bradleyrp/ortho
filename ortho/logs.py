@@ -44,7 +44,7 @@ def stylized_print(override=False):
 		# hold the standard print
 		_print = print
 		key_leads = ['status','warning','error','note','usage',
-			'exception','except','question','run','tail','watch',
+			'exception','except','question','tail','watch',
 			'bash','debug']
 		key_leads_regex = re.compile(
 			r'^(?:(%s)(?:\s|:\s)?)(.+)$'%'|'.join(key_leads))

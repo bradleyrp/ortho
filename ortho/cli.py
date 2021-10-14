@@ -5,8 +5,12 @@
 Command-line helpers.
 """
 
+import os
+import sys
 import re
 import ast
+import functools
+from .reexec import interact
 
 def cli_args_to_kwargs(*args,separator='='):
 	"""
@@ -64,5 +68,25 @@ def element_cli(func_real):
 		#   with other click functions
 		inner.__name__ = func.__name__
 		inner.__doc__ = func_real.__doc__
+		return inner
+	return outer
+
+def scripter(fn,spot=None):
+	"""
+	Decorator which calls a script interactively and discards the function.
+	"""
+	# the calling module should send along the file so we know where to look
+	#   for the script which we will be calling interactively
+	# dev: automatically detect the file from the originating module scope
+	def outer(func):
+		def inner(**kwargs):
+			# get the parent module
+			mod_base = func.__module__.split('.')[0]
+			# get the parent module path
+			mod_base_dn = os.path.dirname(sys.modules[mod_base].__file__)
+			script_fn = os.path.join(mod_base_dn,fn)
+			interact(script_fn,onward=kwargs)
+		inner.__name__ = func.__name__
+		inner.__doc__ = func.__doc__
 		return inner
 	return outer

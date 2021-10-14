@@ -281,6 +281,10 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	#   one that is symmetric, simulating the act of stepping through code while
 	#   still retaining the native coding experience
 	out['__name__'] = '__main__'
+	# dev: run the code once without main in case there is an error in main,
+	#   then start the interactive session and allow an exception in main to
+	#   continue inside the debugger. this would eliminate a case where an 
+	#   exception in __main__ prevents interactive sessions altogether
 	# let the script know we are ortho in case that is useful when building a
 	#   script that could run with regular CLI arguments or with hardcoded
 	#   tests during development
