@@ -21,6 +21,29 @@ def catalog(base,path=None):
 			for b in catalog(base[x],local_path): yield b
 	else: yield path,base
 
+def delve(o,*k): 
+	"""
+	Return items from a nested dict.
+	"""
+	return delve(o[k[0]],*k[1:]) if len(k)>1 else o[k[0]]
+
+def delveset(o,*k,**kwargs): 
+	"""
+	Utility function for adding a path to a nested dict.
+	"""
+	value = kwargs.pop('value',None)
+	if value==None: raise Exception('delveset needs a value')
+	if kwargs: raise Exception('unprocessed kwargs %s'%str(kwargs))
+	if len(k)==0: raise Exception('deepset needs a path')
+	elif len(k)==1: 
+		try: o[k[0]] = value
+		except Exception as e:
+			print('cannot make a delveset assignment of %s to %s'%(k[0],str(o)))
+			raise 
+	else:
+		if k[0] not in o: o[k[0]] = {}
+		delveset(o[k[0]],*k[1:],value=value)
+
 def script_packer(settings):
 	"""
 	Canonical method for extracting variables from scripts.

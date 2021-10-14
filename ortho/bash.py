@@ -44,45 +44,44 @@ def bash_newliner(line_decode,log=None):
 	line_here = ('\n'.join(line_subs)+'\n')
 	return line_here
 
-def bash(command):
+def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
+	local=False,scroll_log=True,permit_fail=False,announce=False):
 	"""
-	Interface to BASH.
-	See legacy code below with extra features that will be ported here.
-	dev: port legacy features here
+	Run a BASH command.
+	This function serves as a general interface to the shell.
+	There is no TTY so we cannot run an interactive docker session.
 	"""
-	raise NotImplementedError
-
-def bash_legacy(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
-	announce=False,v=False,local=False,scroll_log=True,permit_fail=False):
-	"""
-	Run a bash command.
-	Development note: tee functionality would be useful however you cannot use pipes with subprocess here.
-	Vital note: log is relative to the current location and not the cwd.
-	Note that this cannot produce a TTY so it is not useful for running interactive docker.
-	"""
-	announce = announce or v
 	if announce: 
-		print('status',
-			'ortho.bash%s runs command: %s'%(' (at %s)'%cwd if cwd else '',str(command)))
-	merge_stdout_stderr = False
+		print('status: ortho.bash%s runs command: %s'%(
+			' (at %s)'%cwd if cwd else '',str(command)))
+	# the local flag triggers the use of chdir so we stash the cwd
 	if local: cwd_local = str(cwd)
 	if not cwd or local: cwd = '.'
+	# resolve absolute path
+	if cwd: cwd = os.path.abspath(os.path.expanduser(cwd))
+	# the log path is relative to the cwd
+	# note that os.path.join will override the first argument if you start
+	#   with a leading slash, which means that you can use an absolute path
+	#   for the log file and it will ignore the cwd. we expand user in case
+	#   you end up using a tilde in your path. otherwise the default behavior
+	#   is to put the log file in the cwd. this provides the best of both worlds
+	if log: log_abs = os.path.abspath(os.path.join(cwd,os.path.expanduser(log)))
+	else: log_abs = None
+	# run chdir beforehand if we select the local mode
 	if local: 
+		# the log path is relative to the local cwd if we are using chdir
 		if log: log = os.path.relpath(log,cwd_local)
 		pwd = os.getcwd()
 		os.chdir(cwd_local)
 	if log == None: 
-		# no present need to separate stdout and stderr so note the pipe below
-		merge_stdout_stderr = True
 		kwargs = dict(cwd=cwd,shell=True,executable='/bin/bash',
 			stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
 		if input: kwargs['stdin'] = subprocess.PIPE
 		proc = subprocess.Popen(command,**kwargs)
 		if inpipe and scroll: raise Exception('cannot use inpipe with scrolling output')
 		if inpipe: 
-			#! note that some solutions can handle input
-			#!   see: https://stackoverflow.com/questions/17411966
-			#!   test with make_ndx at some point
+			# note that some solutions can handle input
+			#   see: https://stackoverflow.com/questions/17411966
 			stdout,stderr = proc.communicate(input=inpipe)
 		# no log and no input pipe
 		else: 
@@ -101,7 +100,7 @@ def bash_legacy(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 	# special scroll is useful for some cases where buffered output was necessary
 	# this method can handle universal newlines while the threading method cannot
 	elif log and scroll=='special':
-		with io.open(log,'wb') as writes, io.open(log,'rb',1) as reads:
+		with io.open(log_abs,'wb') as writes, io.open(log_abs,'rb') as reads:
 			proc = subprocess.Popen(command,stdout=writes,
 				cwd=cwd,shell=True,universal_newlines=True)
 			while proc.poll() is None:
@@ -115,18 +114,21 @@ def bash_legacy(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 		# note that this method also works if you remove output to a file
 		#   however I was not able to figure out how to identify which stream 
 		#   was which during iter, for obvious reasons
-		#! note that this fails with weird newlines i.e. when GROMACS supplies
-		#!   a "remaining wall clock time" and this problem cannot be overcome
-		#!   by setting universal_newlines with this scroll method. recommend
-		#!   that users instead try the special method above, which works fine
-		#!   with unusual newlines
+		# note that this fails with weird newlines i.e. when GROMACS supplies
+		#   a "remaining wall clock time" and this problem cannot be overcome
+		#   by setting universal_newlines with this scroll method. recommend
+		#   that users instead try the special method above, which works fine
+		#   with unusual newlines
+		# with bufsize 1 we get: RuntimeWarning: line buffering (buffering=1) 
+		#   isn't supported in binary mode, the default buffer size will be used
 		proc = subprocess.Popen(command,cwd=cwd,shell=True,executable='/bin/bash',
-			stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
+			stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=0)
 		qu = queue.Queue()
 		threading.Thread(target=reader,args=[proc.stdout,qu]).start()
 		threading.Thread(target=reader,args=[proc.stderr,qu]).start()
 		empty = '' if sys.version_info<(3,0) else b''
-		with open(log,'ab') as fp:
+		log_abs_base = os.path.basename(log_abs)
+		with open(log_abs,'ab') as fp:
 			for _ in range(2):
 				for _,line in iter(qu.get,None):
 					# decode early, encode late
@@ -137,7 +139,7 @@ def bash_legacy(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 					#   to the output. this can get cluttered so you can turn off scroll_log if you want
 					if scroll_log:
 						line = re.sub('\r\n?',r'\n',line_decode)
-						line_subs = ['[LOG] %s | %s'%(log,l.strip(' ')) 
+						line_subs = ['[LOG] %s | %s'%(log_abs_base,l.strip(' ')) 
 							for l in line.strip('\n').splitlines() if l] 
 						if not line_subs: continue
 						line_here = ('\n'.join(line_subs)+'\n')
@@ -153,7 +155,7 @@ def bash_legacy(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 					fp.write(line.encode('utf-8'))
 	# log to file and suppress output
 	elif log and not scroll:
-		output = open(log,'w')
+		output = open(log_abs,'w')
 		kwargs = dict(cwd=cwd,shell=True,executable='/bin/bash',
 			stdout=output,stderr=output)
 		if inpipe: kwargs['stdin'] = subprocess.PIPE
@@ -170,20 +172,20 @@ def bash_legacy(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 	#   along a standard traceback to the location of the bash call
 	proc.wait()
 	if proc.returncode: 
-		if log: raise Exception('bash error, see %s'%log)
+		if log: raise Exception('bash error, see %s'%log_abs)
 		else: 
-			if stdout and v:
+			if stdout:
 				print('error','stdout:')
 				print(stdout.decode('utf-8').strip('\n'))
-			if stderr and v:
+			if stderr:
 				print('error','stderr:')
 				print(stderr.decode('utf-8').strip('\n'))
 			if not permit_fail:
 				raise Exception(('bash error with returncode %d and '
 					'stdout/stderr printed above')%proc.returncode)
 	if scroll==True: 
-		proc.stdout.close()
-		if not merge_stdout_stderr: proc.stderr.close()
+		if proc.stdout: proc.stdout.close()
+		if proc.stderr: proc.stderr.close()
 	if local: os.chdir(pwd)
 	if not scroll:
 		if stderr: stderr = stderr.decode('utf-8')

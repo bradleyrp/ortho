@@ -1,5 +1,5 @@
 # makefile shortcuts
-.PHONY: develop install check clean remove docs readdocs
+.PHONY: develop install check clean remove docs readdocs test
 NAME = ortho
 develop:
 	pip install -e '.[all]'
@@ -19,3 +19,5 @@ docs:
 	cat docs/build/coverage/python.txt
 readdocs:
 	open docs/build/html/index.html
+test:
+	python -m unittest
