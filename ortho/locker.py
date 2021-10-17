@@ -13,6 +13,8 @@ import datetime as dt
 import copy
 import json
 
+from .utils import dictdiff
+
 # click is part of the cli extra for ortho
 try: import click
 except: click = None
@@ -62,7 +64,7 @@ yaml = None
 try: import yaml
 except: pass
 
-def state_user(statefile='state.yml',
+def statefile(statefile='state.yml',
 	lock=False,log=False,unpack=False,
 	dest='statefile',statefile_ctx='STATEFILE',
 	click_pass=False):
@@ -89,6 +91,7 @@ def state_user(statefile='state.yml',
 
 	def wrapper(func):
 		def inner(*args,**kwargs):
+			ctx = {}
 			# accept the click context as the leading argument in case we are
 			#   using the context to convey the statefile as a CLI argument
 			if click and len(args)>0 and isinstance(args[0],click.core.Context):
@@ -104,7 +107,8 @@ def state_user(statefile='state.yml',
 				if click_pass:
 					kwargs['ctx'] = ctx
 				args = args[1:]
-			statefile_out = ctx.obj.get(statefile_ctx,statefile)
+			try: statefile_out = ctx.obj.get(statefile_ctx,statefile)
+			except: statefile_out = statefile
 			if not statefile_out:
 				raise Exception('you must send the statefile through the CLI '
 					'(via --state) or via the "statefile" kwarg to the '
@@ -139,14 +143,23 @@ def state_user(statefile='state.yml',
 						args=copy.deepcopy(args),
 						kwargs=copy.deepcopy(kwargs),
 						when=ts)
+					# do not log the entire state in the watch file. the state is automatically included
+					#   in the kwargs when we decorate the functions that use the state, so it would
+					#   otherwise appear here unless we remove it
+					state_omit = log_detail['kwargs'].pop('state',{})
 					# pop the click context from the copy otherwise we cannot 
 					#   serialize the context. the `optima_state` function is
 					#   mean to handle user interface functions
 					try: log_detail['kwargs'].pop('ctx')
 					except: pass
 					try: 
+						if unpack:
+							# tracking changes by copying the previous state
+							state_before = copy.deepcopy(state_data)
 						this = func(*args,**kwargs)
 						if unpack:
+							diff = dictdiff(state_before,state_data)
+							log_detail['state_diff'] = diff
 							repack_state(
 								outgoing=this,
 								statefile_out=statefile_out,

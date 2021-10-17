@@ -11,6 +11,7 @@ import re
 import ast
 import functools
 from .reexec import interact
+from .utils import is_empty_function
 
 def cli_args_to_kwargs(*args,separator='='):
 	"""
@@ -53,13 +54,16 @@ def click_args_to_kwargs(args_kw='args'):
 		return inner
 	return outer
 
-def element_cli(func_real):
+def redirect(func_real):
 	"""
 	Decorator used to separate the CLI interface from the elements.
 	This decorator replaces the decorated function with the argument (which should be a function) so that we
 	can separate the click CLI interface from the function itself. This facilitates modular code.	
 	"""
+	# make sure the dummy function is a dummy
 	def outer(func):
+		if not is_empty_function(func):
+			raise Exception('when using redirect your function must be empty')
 		def inner(*args,**kwargs):
 			# dev: check that func_real is a function?
 			return func_real(*args,**kwargs)
@@ -71,6 +75,15 @@ def element_cli(func_real):
 		return inner
 	return outer
 
+def identity(func):
+	"""The identity decorator."""
+	# this method provides a 
+	def inner(*args,**kwargs):
+		return func(*args,**kwargs)
+	inner.__name__ = func.__name__
+	inner.__doc__ = func.__doc__
+	return inner
+	
 def scripter(fn,spot=None):
 	"""
 	Decorator which calls a script interactively and discards the function.
