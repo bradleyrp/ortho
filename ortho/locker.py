@@ -67,13 +67,15 @@ except: pass
 def statefile(statefile='state.yml',
 	lock=False,log=False,unpack=False,
 	dest='statefile',statefile_ctx='STATEFILE',
-	click_pass=False):
+	click_pass=False,track=False):
 	"""
 	Decorator to supervise a state with file locks and loggin.
 
 	This includes a connection to the click context so you can get the statefile
 	name from the click context.
 	"""
+	if track and not unpack:
+		raise Exception('you must set unpack if you want to track')
 
 	def repack_state(outgoing,statefile_out,fname,state_ptr):
 		"""Write the state to the statefile."""
@@ -153,13 +155,14 @@ def statefile(statefile='state.yml',
 					try: log_detail['kwargs'].pop('ctx')
 					except: pass
 					try: 
-						if unpack:
+						if unpack and track:
 							# tracking changes by copying the previous state
 							state_before = copy.deepcopy(state_data)
 						this = func(*args,**kwargs)
 						if unpack:
-							diff = dictdiff(state_before,state_data)
-							log_detail['state_diff'] = diff
+							if track:
+								diff = dictdiff(state_before,state_data)
+								log_detail['state_diff'] = diff
 							repack_state(
 								outgoing=this,
 								statefile_out=statefile_out,
