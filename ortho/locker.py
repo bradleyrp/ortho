@@ -58,16 +58,17 @@ class SimpleFlock:
 
 # yaml is an optional handler below
 # dev: generalize the reader/writer for the state
-# dev: make the cli requirement for yaml more consistent. note that we use yaml when we use the unpack flag
+# dev: make the cli requirement for yaml more consistent
+#   note that we use yaml when we use the unpack flag
 #   in state_user below
 yaml = None
 try: import yaml
 except: pass
 
-def statefile(statefile='state.yml',
-	lock=False,log=False,unpack=False,
-	dest='statefile',statefile_ctx='STATEFILE',
-	click_pass=False,track=False):
+def statefile(name='state.yml',
+	lock=False,log=False,unpack=True,dest='state',
+	statefile_ctx='STATEFILE',statefile_infer=None,
+	click_pass=False,track=True,hook=None):
 	"""
 	Decorator to supervise a state with file locks and loggin.
 
@@ -76,6 +77,8 @@ def statefile(statefile='state.yml',
 	"""
 	if track and not unpack:
 		raise Exception('you must set unpack if you want to track')
+	if unpack and not yaml:
+		raise Exception('unpack requires yaml')
 
 	def repack_state(outgoing,statefile_out,fname,state_ptr):
 		"""Write the state to the statefile."""
@@ -93,7 +96,6 @@ def statefile(statefile='state.yml',
 
 	def wrapper(func):
 		def inner(*args,**kwargs):
-			ctx = {}
 			# accept the click context as the leading argument in case we are
 			#   using the context to convey the statefile as a CLI argument
 			if click and len(args)>0 and isinstance(args[0],click.core.Context):
@@ -109,17 +111,19 @@ def statefile(statefile='state.yml',
 				if click_pass:
 					kwargs['ctx'] = ctx
 				args = args[1:]
-			try: statefile_out = ctx.obj.get(statefile_ctx,statefile)
-			except: statefile_out = statefile
+				statefile_out = ctx.obj.get(statefile_ctx,name)
+			if statefile_infer:
+				statefile_out = statefile_infer()
 			if not statefile_out:
-				raise Exception('you must send the statefile through the CLI '
-					'(via --state) or via the "statefile" kwarg to the '
-					'decorator')
+				# use the default name if we did not get the statefile from the 
+				#   ctx which comes from a parent click command or the 
+				#   statefile_infer function
+				statefile_out = name
 			if 'statefile' in kwargs:
 				raise Exception('argument collision on "statefile"')
 			# if we are not unpacking, we just pass the statefile
 			if not unpack:
-				# put the statefile name in the kwarg
+				# put the state name in the kwarg
 				kwargs[dest] = statefile_out
 			else:
 				if not os.path.isfile(statefile_out): state_data = {}
@@ -145,9 +149,10 @@ def statefile(statefile='state.yml',
 						args=copy.deepcopy(args),
 						kwargs=copy.deepcopy(kwargs),
 						when=ts)
-					# do not log the entire state in the watch file. the state is automatically included
-					#   in the kwargs when we decorate the functions that use the state, so it would
-					#   otherwise appear here unless we remove it
+					# do not log the entire state in the watch file. the state 
+					#   is automatically included in the kwargs when we decorate
+					#   the functions that use the state, so it would otherwise 
+					#   appear here unless we remove it
 					state_omit = log_detail['kwargs'].pop('state',{})
 					# pop the click context from the copy otherwise we cannot 
 					#   serialize the context. the `optima_state` function is
