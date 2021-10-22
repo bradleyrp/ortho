@@ -66,9 +66,9 @@ try: import yaml
 except: pass
 
 def statefile(name='state.yml',
-	lock=False,log=False,unpack=True,dest='state',
+	lock=True,log=False,unpack=True,watch=True,dest='state',
 	statefile_ctx='STATEFILE',statefile_infer=None,
-	click_pass=False,track=True,hook=None):
+	click_pass=False,track=True,hook=None,verbose=False,loader=None):
 	"""
 	Decorator to supervise a state with file locks and loggin.
 
@@ -77,8 +77,12 @@ def statefile(name='state.yml',
 	"""
 	if track and not unpack:
 		raise Exception('you must set unpack if you want to track')
+	if track and not watch:
+		raise Exception('you must set watch if you want to track')
 	if unpack and not yaml:
 		raise Exception('unpack requires yaml')
+	if loader and not callable(loader):
+		raise Exception('loader must be a function')
 
 	def repack_state(outgoing,statefile_out,fname,state_ptr):
 		"""Write the state to the statefile."""
@@ -96,6 +100,7 @@ def statefile(name='state.yml',
 
 	def wrapper(func):
 		def inner(*args,**kwargs):
+			statefile_out = None
 			# accept the click context as the leading argument in case we are
 			#   using the context to convey the statefile as a CLI argument
 			if click and len(args)>0 and isinstance(args[0],click.core.Context):
@@ -121,6 +126,12 @@ def statefile(name='state.yml',
 				statefile_out = name
 			if 'statefile' in kwargs:
 				raise Exception('argument collision on "statefile"')
+			# fully resolve the statefile_out path, assume to be relative to cwd
+			statefile_out = os.path.abspath(os.path.expanduser(statefile_out))
+			# the lock file is hidden in the same folder
+			statefile_lock = os.path.join(
+				os.path.dirname(statefile_out),'.%s.lock'%
+				os.path.basename(statefile_out))
 			# if we are not unpacking, we just pass the statefile
 			if not unpack:
 				# put the state name in the kwarg
@@ -128,9 +139,15 @@ def statefile(name='state.yml',
 			else:
 				if not os.path.isfile(statefile_out): state_data = {}
 				else:
-					print(f'loading {statefile_out}')
+					if verbose: print(f'loading {statefile_out}')
+
+					# hook to add constructors to yaml
+					# alternative is to use ortho.YAMLObject in your code
+					if loader: loader_out = loader()
+					else: loader_out = yaml.SafeLoader
+
 					with open(statefile_out,'r') as fp:
-						state_data = yaml.load(fp,Loader=yaml.SafeLoader)
+						state_data = yaml.load(fp,Loader=loader_out)
 						if not state_data: state_data = {}
 				# load the state data into the destination kwarg
 				kwargs[dest] = state_data
@@ -139,8 +156,8 @@ def statefile(name='state.yml',
 				raise Exception('you must lock if you log')
 			elif lock and log:
 				with SimpleFlock(
-					f'.{statefile_out}.lock',timeout=3) as sf:
-					print(f'status: locked on {statefile_out}')
+					statefile_lock,timeout=3) as sf:
+					if verbose: print(f'status: locked {statefile_out}')
 					# dev: should we set a timezone
 					ts = dt.datetime.fromtimestamp(
 						time.time()).strftime('%Y.%m.%d.%H%M')
@@ -174,19 +191,27 @@ def statefile(name='state.yml',
 								fname=func.__name__,
 								state_ptr=state_data)
 					except:
-						log_detail['fail'] = True
-						with open(f'{statefile_out}.watch','a') as fp:
-							fp.write(json.dumps(log_detail)+'\n')
+						if watch:
+							log_detail['fail'] = True
+							with open(f'{statefile_out}.watch','a') as fp:
+								# ensure we can serialize any classes
+								# via: https://stackoverflow.com/a/64469761
+								fp.write(json.dumps(
+									log_detail,default=vars)+'\n')
 						raise
 					else:
-						with open(f'{statefile_out}.watch','a') as fp:
-							fp.write(json.dumps(log_detail)+'\n')
-					print('status: releasing lock')
+						if watch:
+							with open(f'{statefile_out}.watch','a') as fp:
+								# ensure we can serialize any classes
+								# via: https://stackoverflow.com/a/64469761
+								fp.write(json.dumps(
+									log_detail,default=vars)+'\n')
+					if verbose: print('status: releasing lock ')
 					return this
 			elif lock and not log: 
 				with SimpleFlock(
 					f'.{statefile_out}.lock',timeout=3) as sf:
-					print(f'status: locked on {statefile_out}')
+					if verbose: print(f'status: locked {statefile_out}')
 					this = func(*args,**kwargs)
 					if unpack:
 						repack_state(
@@ -194,7 +219,7 @@ def statefile(name='state.yml',
 							statefile_out=statefile_out,
 							fname=func.__name__,
 							state_ptr=state_data)
-					print('status: releasing lock')
+					if verbose: print('status: releasing lock {statefile_out}')
 					return this
 			else:
 				this = func(*args,**kwargs)
