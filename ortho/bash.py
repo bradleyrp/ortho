@@ -14,7 +14,8 @@ def command_check(command):
 	print('[STATUS] checking command "%s"'%command)
 	try:
 		with open(os.devnull,'w') as FNULL:
-			proc = subprocess.Popen(command,stdout=FNULL,stderr=FNULL,shell=True,executable='/bin/bash')
+			proc = subprocess.Popen(command,
+				stdout=FNULL,stderr=FNULL,shell=True,executable='/bin/bash')
 			proc.communicate()
 			return proc.returncode==0
 	except Exception as e: 
@@ -85,7 +86,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 			stdout,stderr = proc.communicate(input=inpipe)
 		# no log and no input pipe
 		else: 
-			# collecting stdout
+			# collect stdout which receives stderr also
 			stdout,stderr = [],''
 			# scroll option pipes output to the screen
 			if scroll:
@@ -99,7 +100,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 				if proc.returncode and not permit_fail:
 					raise Exception('see above for error. bash return code %d'%
 						proc.returncode)
-				stdout = '\n'.join(stdout).encode('utf-8')
+				stdout = '\n'.join(stdout)
 			# no scroll waits for output and then checks it below
 			else: stdout,stderr = proc.communicate()
 	# alternative scroll method via https://stackoverflow.com/questions/18421757
@@ -133,6 +134,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 		threading.Thread(target=reader,args=[proc.stdout,qu]).start()
 		threading.Thread(target=reader,args=[proc.stderr,qu]).start()
 		empty = '' if sys.version_info<(3,0) else b''
+		# collect stdout which receives stderr also
 		stdout,stderr = [],''
 		log_abs_base = os.path.basename(log_abs)
 		with open(log_abs,'ab') as fp:
@@ -161,7 +163,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 					stdout.append(line_here)
 					# do not write the log file in the final line
 					fp.write(line.encode('utf-8'))
-		stdout = '\n'.join(stdout)
+		stdout = '\n'.join(stdout).decode()
 	# log to file and suppress output
 	elif log and not scroll:
 		output = open(log_abs,'w')
