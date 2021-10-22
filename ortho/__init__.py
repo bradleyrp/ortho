@@ -8,13 +8,14 @@ __all__ = [
 	'debugger','debugger_click',
 	'statefile','SimpleFlock',
 	'identity','redirect','scripter',
-	'script_packer','delve','delveset','catalog',
+	'script_packer','delve','delvetry','delveset','catalog',
 	'Struct',
 	'bash',
 	'meta_hasher',
 	'dispatcher','Dispatcher','Handler','introspect_function',
+	'YAMLObject',
 	# definitions
-	'str_types']
+	'str_types',]
 
 from ._version import version
 from .reexec import interact as interact
@@ -28,6 +29,7 @@ from .cli import redirect
 from .cli import scripter
 from .utils import catalog
 from .utils import delve
+from .utils import delvetry
 from .utils import delveset
 from .utils import script_packer
 from .utils import Struct
@@ -36,6 +38,7 @@ from .bash import bash
 from .metadata import meta_hasher
 from .dispatch import Handler
 from .dispatch import introspect_function
+from .yaml import YAMLObject
 
 # definitions
 from .logs import str_types

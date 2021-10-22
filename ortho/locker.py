@@ -143,6 +143,8 @@ def statefile(name='state.yml',
 
 					# hook to add constructors to yaml
 					# alternative is to use ortho.YAMLObject in your code
+					# note that you cannot use the default SafeLoader below
+					#   while also using YAMLObject to make YAML constructors
 					if loader: loader_out = loader()
 					else: loader_out = yaml.SafeLoader
 

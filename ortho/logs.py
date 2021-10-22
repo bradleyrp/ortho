@@ -44,10 +44,10 @@ def stylized_print(override=False):
 		# hold the standard print
 		_print = print
 		key_leads = ['status','warning','error','note','usage',
-			'exception','except','question','tail','watch',
+			'exception','except','question','tail','watch','loading',
 			'bash','debug']
 		key_leads_regex = re.compile(
-			r'^(?:(%s)(?:\s|:\s)?)(.+)$'%'|'.join(key_leads))
+			r'^(?:(%s)(?:\s|:\s))(.+)$'%'|'.join(key_leads))
 
 		def print_stylized(*args,**kwargs):
 			"""Custom print function."""

@@ -28,6 +28,13 @@ def delve(o,*k):
 	"""
 	return delve(o[k[0]],*k[1:]) if len(k)>1 else o[k[0]]
 
+def delvetry(o,*k): 
+	"""
+	Return items from a nested dict.
+	"""
+	try: return delve(o,*k)
+	except: return None
+
 def delveset(o,*k,**kwargs): 
 	"""
 	Utility function for adding a path to a nested dict.
