@@ -45,7 +45,7 @@ def bash_newliner(line_decode,log=None):
 	return line_here
 
 def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
-	local=False,scroll_log=True,permit_fail=False,announce=False):
+	local=False,scroll_log=True,permit_fail=False,announce=False,quiet=False):
 	"""
 	Run a BASH command.
 	This function serves as a general interface to the shell.
@@ -85,15 +85,21 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 			stdout,stderr = proc.communicate(input=inpipe)
 		# no log and no input pipe
 		else: 
+			# collecting stdout
+			stdout,stderr = [],''
 			# scroll option pipes output to the screen
 			if scroll:
 				empty = '' if sys.version_info<(3,0) else b''
 				for line in iter(proc.stdout.readline,empty):
-					sys.stdout.write((tag if tag else '')+line.decode('utf-8'))
-					sys.stdout.flush()
+						if not quiet: 
+							sys.stdout.write((tag if tag else '')+line.decode('utf-8'))
+							sys.stdout.flush()
+						stdout.append(line.decode('utf-8'))
 				proc.wait()
-				if proc.returncode:
-					raise Exception('see above for error. bash return code %d'%proc.returncode)
+				if proc.returncode and not permit_fail:
+					raise Exception('see above for error. bash return code %d'%
+						proc.returncode)
+				stdout = '\n'.join(stdout).encode('utf-8')
 			# no scroll waits for output and then checks it below
 			else: stdout,stderr = proc.communicate()
 	# alternative scroll method via https://stackoverflow.com/questions/18421757
@@ -127,6 +133,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 		threading.Thread(target=reader,args=[proc.stdout,qu]).start()
 		threading.Thread(target=reader,args=[proc.stderr,qu]).start()
 		empty = '' if sys.version_info<(3,0) else b''
+		stdout,stderr = [],''
 		log_abs_base = os.path.basename(log_abs)
 		with open(log_abs,'ab') as fp:
 			for _ in range(2):
@@ -151,8 +158,10 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 					#   described here: https://pythonhosted.org/kitchen/unicode-frustrations.html
 					#   so just port your unicode-printing python 2 code or use a codecs.getwriter
 					print(line_here,end='')
+					stdout.append(line_here)
 					# do not write the log file in the final line
 					fp.write(line.encode('utf-8'))
+		stdout = '\n'.join(stdout)
 	# log to file and suppress output
 	elif log and not scroll:
 		output = open(log_abs,'w')
@@ -172,7 +181,8 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 	#   along a standard traceback to the location of the bash call
 	proc.wait()
 	if proc.returncode: 
-		if log: raise Exception('bash error, see %s'%log_abs)
+		if log and not permit_fail: 
+			raise Exception('bash error, see %s'%log_abs)
 		else: 
 			if stdout:
 				print('error','stdout:')
@@ -190,7 +200,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 	if not scroll:
 		if stderr: stderr = stderr.decode('utf-8')
 		if stdout: stdout = stdout.decode('utf-8')
-	return None if scroll else {'stdout':stdout,'stderr':stderr}
+	return {'stdout':stdout,'stderr':stderr,'code':proc.returncode}
 
 class TeeMultiplexer:
 	"""
