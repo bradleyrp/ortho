@@ -95,8 +95,10 @@ def statefile(name='state.yml',
 				'returned an object that is not a dict but '
 				'optima_state was called with unpack so we '
 				'cannot repack the data properly. see error above.')
+		# generate the output first otherwise you might risk blanking the file
+		output = yaml.dump(outgoing)
 		with open(statefile_out,'w') as fp:
-			fp.write(yaml.dump(outgoing))
+			fp.write(output)
 
 	def wrapper(func):
 		def inner(*args,**kwargs):

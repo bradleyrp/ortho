@@ -28,12 +28,12 @@ def delve(o,*k):
 	"""
 	return delve(o[k[0]],*k[1:]) if len(k)>1 else o[k[0]]
 
-def delvetry(o,*k): 
+def delvetry(o,*k,default=None): 
 	"""
 	Return items from a nested dict.
 	"""
 	try: return delve(o,*k)
-	except: return None
+	except: return default
 
 def delveset(o,*k,**kwargs): 
 	"""
