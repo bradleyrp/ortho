@@ -102,7 +102,9 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 						proc.returncode)
 				stdout = '\n'.join(stdout)
 			# no scroll waits for output and then checks it below
-			else: stdout,stderr = proc.communicate()
+			else: 
+				# these are strings not bytes
+				stdout,stderr = proc.communicate()
 	# alternative scroll method via https://stackoverflow.com/questions/18421757
 	# special scroll is useful for some cases where buffered output was necessary
 	# this method can handle universal newlines while the threading method cannot
@@ -188,10 +190,10 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 		else: 
 			if stdout:
 				print('error','stdout:')
-				print(stdout.decode('utf-8').strip('\n'))
+				print(stdout.strip('\n'))
 			if stderr:
 				print('error','stderr:')
-				print(stderr.decode('utf-8').strip('\n'))
+				print(stderr.strip('\n'))
 			if not permit_fail:
 				raise Exception(('bash error with returncode %d and '
 					'stdout/stderr printed above')%proc.returncode)

@@ -139,7 +139,8 @@ def statefile(name='state.yml',
 				# put the state name in the kwarg
 				kwargs[dest] = statefile_out
 			else:
-				if not os.path.isfile(statefile_out): state_data = {}
+				# send none if there is no statefile so the receiver knows
+				if not os.path.isfile(statefile_out): state_data = None
 				else:
 					if verbose: print(f'loading {statefile_out}')
 
