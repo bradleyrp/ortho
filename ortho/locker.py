@@ -12,6 +12,7 @@ import errno
 import datetime as dt
 import copy
 import json
+import getpass
 
 from .utils import dictdiff
 
@@ -84,19 +85,14 @@ def statefile(name='state.yml',
 	if loader and not callable(loader):
 		raise Exception('loader must be a function')
 
-	def repack_state(outgoing,statefile_out,fname,state_ptr):
+	def repack_state(state_ptr,statefile_out,fname):
 		"""Write the state to the statefile."""
-		if outgoing is None:
-			# the outgoing dict is a pointer to the state we unpacked
-			outgoing = state_ptr	
-		elif not isinstance(outgoing,dict):
-			print('error: outgoing object: %s'%str(outgoing))
-			raise Exception(f'function {fname} '
-				'returned an object that is not a dict but '
-				'optima_state was called with unpack so we '
-				'cannot repack the data properly. see error above.')
+		if not isinstance(state_ptr,dict):
+			raise Exception(
+				'we cannot repack the state because it is not a dict: %s'%
+				str(state_ptr))
 		# generate the output first otherwise you might risk blanking the file
-		output = yaml.dump(outgoing)
+		output = yaml.dump(state_ptr)
 		with open(statefile_out,'w') as fp:
 			fp.write(output)
 
@@ -134,13 +130,24 @@ def statefile(name='state.yml',
 			statefile_lock = os.path.join(
 				os.path.dirname(statefile_out),'.%s.lock'%
 				os.path.basename(statefile_out))
+			# the watchfile is always alongside the statefile
+			#   otherwise we do not have an easy way to control its location
+			watchfile_out = os.path.join(os.path.dirname(statefile_out),'%s.watch'%
+				os.path.basename(statefile_out))
 			# if we are not unpacking, we just pass the statefile
 			if not unpack:
 				# put the state name in the kwarg
 				kwargs[dest] = statefile_out
 			else:
-				# send none if there is no statefile so the receiver knows
-				if not os.path.isfile(statefile_out): state_data = None
+				# initialize the state as a blank dictionary
+				if not os.path.isfile(statefile_out): 
+					# it is essential that we initialize this here so the consumer can
+					#   modify it. the consumer should add a token that signals initialization
+					#   if it needs to control initialization. we cannot use the null type to do this
+					#   otherwise we would not be able to modify the state in place, and we would
+					#   then have to handle return functions very carefully. hence we initialize here
+					#   and let the consumer decide what happens next
+					state_data = {}
 				else:
 					if verbose: print(f'loading {statefile_out}')
 
@@ -169,13 +176,14 @@ def statefile(name='state.yml',
 					log_detail = dict(
 						call=func.__name__,
 						args=copy.deepcopy(args),
+						user=getpass.getuser(),
 						kwargs=copy.deepcopy(kwargs),
 						when=ts)
 					# do not log the entire state in the watch file. the state 
 					#   is automatically included in the kwargs when we decorate
 					#   the functions that use the state, so it would otherwise 
 					#   appear here unless we remove it
-					state_omit = log_detail['kwargs'].pop('state',{})
+					state_omit = log_detail['kwargs'].pop('dest',{})
 					# pop the click context from the copy otherwise we cannot 
 					#   serialize the context. the `optima_state` function is
 					#   mean to handle user interface functions
@@ -185,20 +193,20 @@ def statefile(name='state.yml',
 						if unpack and track:
 							# tracking changes by copying the previous state
 							state_before = copy.deepcopy(state_data)
+						# dev: warn that we are discarding the return value?
 						this = func(*args,**kwargs)
 						if unpack:
 							if track:
 								diff = dictdiff(state_before,state_data)
 								log_detail['state_diff'] = diff
 							repack_state(
-								outgoing=this,
 								statefile_out=statefile_out,
 								fname=func.__name__,
 								state_ptr=state_data)
 					except:
 						if watch:
 							log_detail['fail'] = True
-							with open(f'{statefile_out}.watch','a') as fp:
+							with open(watchfile_out,'a') as fp:
 								# ensure we can serialize any classes
 								# via: https://stackoverflow.com/a/64469761
 								fp.write(json.dumps(
@@ -206,7 +214,7 @@ def statefile(name='state.yml',
 						raise
 					else:
 						if watch:
-							with open(f'{statefile_out}.watch','a') as fp:
+							with open(watchfile_out,'a') as fp:
 								# ensure we can serialize any classes
 								# via: https://stackoverflow.com/a/64469761
 								fp.write(json.dumps(
@@ -218,9 +226,11 @@ def statefile(name='state.yml',
 					f'.{statefile_out}.lock',timeout=3) as sf:
 					if verbose: print(f'status: locked {statefile_out}')
 					this = func(*args,**kwargs)
+					# dev: protect against return values that go nowhere? warning?	
 					if unpack:
 						repack_state(
-							outgoing=this,
+							# the state is modified in place
+							outgoing=kwargs[dest],
 							statefile_out=statefile_out,
 							fname=func.__name__,
 							state_ptr=state_data)
