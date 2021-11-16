@@ -4,15 +4,14 @@
 __all__ = [
 	'version',
 	'interact',
-	'print_function','ortho_print',
+	'ortho_print',
 	'debugger','debugger_click',
 	'statefile','SimpleFlock',
 	'identity','redirect','scripter',
-	'script_packer','delve','delvetry','delveset','catalog',
+	'catalog','delve','delvetry','delveset','script_packer',
 	'Struct','get_cpu_cores',
 	'bash',
-	'meta_hasher',
-	'dispatcher','Dispatcher','Handler','introspect_function',
+	'meta_hasher','dispatcher','Dispatcher','Handler','introspect_function',
 	'YAMLObject',
 	'code_current','get_git_hash',
 	'compose',
@@ -21,16 +20,16 @@ __all__ = [
 
 from ._version import version
 from .reexec import interact as interact
+from .logs import stylized_print as ortho_print
 from .reexec import debugger as debugger
 from .reexec import debugger_click as debugger_click
-from .logs import stylized_print as ortho_print
 from .locker import statefile
 from .locker import SimpleFlock
 from .cli import identity
 from .cli import redirect
 from .cli import scripter
 from .utils import catalog
-from .utils import del{ve
+from .utils import delve
 from .utils import delvetry
 from .utils import delveset
 from .utils import script_packer
@@ -39,6 +38,8 @@ from .utils import get_cpu_cores
 from .diagnose import linetime
 from .bash import bash
 from .metadata import meta_hasher
+from .dispatch import dispatcher
+from .dispatch import Dispatcher
 from .dispatch import Handler
 from .dispatch import introspect_function
 from .yaml import YAMLObject
