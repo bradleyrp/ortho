@@ -30,7 +30,7 @@ from .cli import identity
 from .cli import redirect
 from .cli import scripter
 from .utils import catalog
-from .utils import delve
+from .utils import del{ve
 from .utils import delvetry
 from .utils import delveset
 from .utils import script_packer
