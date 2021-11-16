@@ -223,14 +223,13 @@ def statefile(name='state.yml',
 					return this
 			elif lock and not log: 
 				with SimpleFlock(
-					f'.{statefile_out}.lock',timeout=3) as sf:
+					statefile_lock,timeout=3) as sf:
 					if verbose: print(f'status: locked {statefile_out}')
 					this = func(*args,**kwargs)
 					# dev: protect against return values that go nowhere? warning?	
 					if unpack:
 						repack_state(
 							# the state is modified in place
-							outgoing=kwargs[dest],
 							statefile_out=statefile_out,
 							fname=func.__name__,
 							state_ptr=state_data)

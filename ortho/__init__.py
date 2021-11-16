@@ -9,11 +9,13 @@ __all__ = [
 	'statefile','SimpleFlock',
 	'identity','redirect','scripter',
 	'script_packer','delve','delvetry','delveset','catalog',
-	'Struct',
+	'Struct','get_cpu_cores',
 	'bash',
 	'meta_hasher',
 	'dispatcher','Dispatcher','Handler','introspect_function',
 	'YAMLObject',
+	'code_current','get_git_hash',
+	'compose',
 	# definitions
 	'str_types',]
 
@@ -33,12 +35,16 @@ from .utils import delvetry
 from .utils import delveset
 from .utils import script_packer
 from .utils import Struct
+from .utils import get_cpu_cores
 from .diagnose import linetime
 from .bash import bash
 from .metadata import meta_hasher
 from .dispatch import Handler
 from .dispatch import introspect_function
 from .yaml import YAMLObject
+from .git import code_current
+from .git import get_git_hash
+from .functional import compose
 
 # definitions
 from .logs import str_types
