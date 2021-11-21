@@ -11,22 +11,31 @@ class YAMLObjectOverride(yaml.YAMLObject):
 		"""
 		Convert a representation node to a Python object.
 		"""
-		kwarg_error_msg = '__init__() got an unexpected keyword argument'
-		arg_error = '__init__() missing 1 required positional argument'
-		explain = ' while instantiating YAML constructor "%s": %s'
-		arg_dict = loader.construct_mapping(node, deep=True)
-		try: return cls(**arg_dict)
+		error_keys = [
+			r'__init__\(\) got an unexpected keyword argument',
+			r'__init__\(\) missing 1 required positional argument',
+			r'.+takes no arguments',]
+		explain = 'while instantiating YAML constructor "%s": %s'
+		if node.__class__.__name__=='ScalarNode':
+			kind = 'scalar'
+			args_out = loader.construct_scalar(node)
+		elif node.__class__.__name__=='MappingNode':
+			args_out = loader.construct_mapping(node, deep=True)
+			kind = 'mapping'
+		else:
+			raise Exception(f'invalid node type: {node}')
+		try: 
+			if kind == 'scalar':
+				return cls(args_out)
+			elif kind == 'mapping':
+				return cls(**args_out)
+			else: raise Exception
 		except Exception as e:
-			if re.match(
-				kwarg_error_msg,
-				str(e)):
-				raise TypeError(kwarg_error_msg +
-					explain%cls.__name__,str(e))
-			elif re.match(
-				arg_error,
-				str(e)):
-				raise AssertionError(arg_error + 
-					explain%cls.__name__,str(e))
+			for error_key in error_keys:
+				if re.match(
+					error_key,
+					str(e)):
+					raise TypeError(explain%(cls.__name__,str(e)))
 			else: raise
 
 def use_yaml_init():
