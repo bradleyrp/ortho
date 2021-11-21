@@ -3,7 +3,9 @@
 
 import unittest
 import yaml
-from .yaml import YAMLObject as YAMLObjectOrtho
+from .yaml import YAMLObjectOverride as YAMLObjectOrtho
+
+# dev: note no testing of YAMLIncludeBase yet, which requires files
 
 class ExampleYaml:
 	def __init__(self,arg,kwarg=None):

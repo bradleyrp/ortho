@@ -12,7 +12,7 @@ __all__ = [
 	'Struct','get_cpu_cores',
 	'bash',
 	'meta_hasher','dispatcher','Dispatcher','Handler','introspect_function',
-	'YAMLObject',
+	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
 	'code_current','get_git_hash',
 	'compose',
 	# definitions
@@ -43,6 +43,8 @@ from .dispatch import Dispatcher
 from .dispatch import Handler
 from .dispatch import introspect_function
 from .yaml import YAMLObject
+from .yaml import YAMLIncludeBase
+from .yaml import YAMLIncludeBaseSafe
 from .git import code_current
 from .git import get_git_hash
 from .functional import compose

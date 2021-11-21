@@ -24,7 +24,7 @@ class YAMLObjectOverride(yaml.YAMLObject):
 			kind = 'mapping'
 		else:
 			raise Exception(f'invalid node type: {node}')
-		try: 
+		try:
 			if kind == 'scalar':
 				return cls(args_out)
 			elif kind == 'mapping':
@@ -45,5 +45,29 @@ def use_yaml_init():
 	"""
 	yaml.YAMLObject = YAMLObjectOverride
 
+class YAMLIncludeBase(yaml.YAMLObject):
+	"""A YAMLObject that loads another YAML file safely."""
+	_loader_kind = yaml.Loader
+	# we neglect a yaml_tag here or this will automatically register with
+	#   pyyaml when we import ortho. this means that if you want to use
+	#   this as a tag, subclass and add yaml_tag to set one. note that 
+	#   for some reason we could not get this to work with yaml.add_constructor
+	#   because the arguments were not correct
+	yaml_tag = None
+	@classmethod
+	def from_yaml(cls, loader, node):
+		"""Load another YAML file at this node."""
+		fn = loader.construct_scalar(node)
+		with open(fn) as fp:
+			data = yaml.load(fp.read(),Loader=cls._loader_kind)
+		return data
+
+class YAMLIncludeBaseSafe(yaml.YAMLObject):
+	"""A YAMLObject that loads another YAML file safely."""
+	_loader_kind = yaml.SafeLoader
+	# see comment in YAMLInclude for instructions on tags
+	yaml_tag = None
+
 # ortho can provide this kind of YAMLObject
+#   or alternately it could be imported directly
 YAMLObject = YAMLObjectOverride
