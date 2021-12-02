@@ -52,7 +52,9 @@ class YAMLIncludeBase(yaml.YAMLObject):
 	#   pyyaml when we import ortho. this means that if you want to use
 	#   this as a tag, subclass and add yaml_tag to set one. note that 
 	#   for some reason we could not get this to work with yaml.add_constructor
-	#   because the arguments were not correct
+	#   because the arguments were not correct. the use of yaml_tag and 
+	#   YAMLObject are a nice way to globally register something with yaml 
+	#   without excessive calls. this is a useful magic
 	yaml_tag = None
 	@classmethod
 	def from_yaml(cls, loader, node):

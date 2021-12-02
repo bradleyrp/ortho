@@ -15,6 +15,7 @@ __all__ = [
 	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
 	'code_current','get_git_hash',
 	'compose',
+	'linetime',
 	# definitions
 	'str_types',]
 
