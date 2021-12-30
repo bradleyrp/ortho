@@ -165,7 +165,8 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 					stdout.append(line_here)
 					# do not write the log file in the final line
 					fp.write(line.encode('utf-8'))
-		stdout = '\n'.join(stdout).decode()
+		try: stdout = '\n'.join(stdout).decode()
+		except: stdout = '\n'.join(stdout)
 	# log to file and suppress output
 	elif log and not scroll:
 		output = open(log_abs,'w')
@@ -202,8 +203,12 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 		if proc.stderr: proc.stderr.close()
 	if local: os.chdir(pwd)
 	if not scroll:
-		if stderr: stderr = stderr.decode('utf-8')
-		if stdout: stdout = stdout.decode('utf-8')
+		if stderr: 
+			try: stderr = stderr.decode('utf-8')
+			except: pass
+		if stdout: 
+			try: stdout = stdout.decode('utf-8')
+			except: pass
 	return {'stdout':stdout,'stderr':stderr,'code':proc.returncode}
 
 class TeeMultiplexer:
