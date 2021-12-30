@@ -4,7 +4,7 @@
 __all__ = [
 	'version',
 	'interact',
-	'ortho_print',
+	'ortho_print','printer',
 	'debugger','debugger_click',
 	'statefile','SimpleFlock',
 	'identity','redirect','scripter',
@@ -22,6 +22,7 @@ __all__ = [
 from ._version import version
 from .reexec import interact as interact
 from .logs import stylized_print as ortho_print
+from .logs import printer as printer
 from .reexec import debugger as debugger
 from .reexec import debugger_click as debugger_click
 from .locker import statefile
