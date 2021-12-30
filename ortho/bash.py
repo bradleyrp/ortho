@@ -165,6 +165,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 					stdout.append(line_here)
 					# do not write the log file in the final line
 					fp.write(line.encode('utf-8'))
+		# protect against type issues
 		try: stdout = '\n'.join(stdout).decode()
 		except: stdout = '\n'.join(stdout)
 	# log to file and suppress output
@@ -204,9 +205,11 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 	if local: os.chdir(pwd)
 	if not scroll:
 		if stderr: 
+			# protect against type issues
 			try: stderr = stderr.decode('utf-8')
 			except: pass
 		if stdout: 
+			# protect against type issues
 			try: stdout = stdout.decode('utf-8')
 			except: pass
 	return {'stdout':stdout,'stderr':stderr,'code':proc.returncode}
