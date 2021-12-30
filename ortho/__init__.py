@@ -4,7 +4,7 @@
 __all__ = [
 	'version',
 	'interact',
-	'ortho_print',
+	'ortho_print','printer',
 	'debugger','debugger_click',
 	'statefile','SimpleFlock',
 	'identity','redirect','scripter',
@@ -12,15 +12,17 @@ __all__ = [
 	'Struct','get_cpu_cores',
 	'bash',
 	'meta_hasher','dispatcher','Dispatcher','Handler','introspect_function',
-	'YAMLObject',
+	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
 	'code_current','get_git_hash',
 	'compose',
+	'linetime',
 	# definitions
 	'str_types',]
 
 from ._version import version
 from .reexec import interact as interact
 from .logs import stylized_print as ortho_print
+from .logs import printer as printer
 from .reexec import debugger as debugger
 from .reexec import debugger_click as debugger_click
 from .locker import statefile
@@ -43,6 +45,8 @@ from .dispatch import Dispatcher
 from .dispatch import Handler
 from .dispatch import introspect_function
 from .yaml import YAMLObject
+from .yaml import YAMLIncludeBase
+from .yaml import YAMLIncludeBaseSafe
 from .git import code_current
 from .git import get_git_hash
 from .functional import compose
