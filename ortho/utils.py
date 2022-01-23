@@ -6,8 +6,10 @@ Utilities catchall.
 """
 
 import os
+import sys
 import psutil
 import pprint
+import subprocess
 
 def catalog(base,path=None):
 	"""
@@ -146,3 +148,19 @@ def is_empty_function(func):
 	return (
 		func.__code__.co_code == empty_func.__code__.co_code or 
 		func.__code__.co_code == empty_func_with_doc.__code__.co_code)
+
+def clipboard(cmd,strict=False):
+	"""
+	Copy something to the clipboard.
+	"""
+	# dev: silent error on Linux because this is not completed yet
+	if sys.platform=='linux':
+		if not strict: return
+		raise NotImplementedError('clipboard is not implemented on Linux')
+	elif sys.platform=='darwin':
+		util = 'pbcopy'
+		subprocess.run("pbcopy",universal_newlines=True,input=cmd)
+	else:
+		raise NotImplementedError('clipboard not configured for platform: %s'%
+			sys.platform)
+	return

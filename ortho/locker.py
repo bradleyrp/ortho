@@ -76,6 +76,7 @@ def statefile(name='state.yml',
 	This includes a connection to the click context so you can get the statefile
 	name from the click context.
 	"""
+	# dev: is the hook variable deprecated?
 	if track and not unpack:
 		raise Exception('you must set unpack if you want to track')
 	if track and not watch:

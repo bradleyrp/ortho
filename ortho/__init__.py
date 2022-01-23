@@ -9,8 +9,9 @@ __all__ = [
 	'statefile','SimpleFlock',
 	'identity','redirect','scripter',
 	'catalog','delve','delvetry','delveset','script_packer',
-	'Struct','get_cpu_cores',
+	'Struct','get_cpu_cores','clipboard',
 	'bash','command_check',
+	'bash',
 	'meta_hasher','dispatcher','Dispatcher','Handler','introspect_function',
 	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
 	'code_current','get_git_hash',
@@ -37,6 +38,7 @@ from .utils import delveset
 from .utils import script_packer
 from .utils import Struct
 from .utils import get_cpu_cores
+from .utils import clipboard
 from .diagnose import linetime
 from .bash import bash
 from .bash import command_check

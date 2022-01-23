@@ -26,7 +26,7 @@ def code_current(source,path,strict=True):
 			permit_fail=True,quiet=True)
 		if re.findall('local out of date',result['stdout']):
 			if not strict:
-				print('warning: your code (%s) is out of date')
+				print('warning: your code (%s) is out of date'%path)
 			else:
 				raise Exception('your local code (%s) is out of date!'%path)
 	return get_git_hash(path=path)
