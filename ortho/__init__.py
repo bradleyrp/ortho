@@ -10,7 +10,7 @@ __all__ = [
 	'identity','redirect','scripter',
 	'catalog','delve','delvetry','delveset','script_packer',
 	'Struct','get_cpu_cores',
-	'bash',
+	'bash','command_check',
 	'meta_hasher','dispatcher','Dispatcher','Handler','introspect_function',
 	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
 	'code_current','get_git_hash',
@@ -39,6 +39,7 @@ from .utils import Struct
 from .utils import get_cpu_cores
 from .diagnose import linetime
 from .bash import bash
+from .bash import command_check
 from .metadata import meta_hasher
 from .dispatch import dispatcher
 from .dispatch import Dispatcher
