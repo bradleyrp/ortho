@@ -2,9 +2,9 @@
 .PHONY: develop install check clean remove docs readdocs
 NAME = ortho
 develop:
-	pip install -e '.[docs,cli]'
+	pip install -e '.[all]'
 install:
-	pip install '.[docs,cli]'
+	pip install '.[all]'
 check:
 	python -c 'import ${NAME}'
 clean:

@@ -52,8 +52,6 @@ class SimpleFlock:
 
 # yaml is an optional handler below
 # dev: generalize the reader/writer for the state
-# dev: make the cli requirement for yaml more consistent. note that we use yaml when we use the unpack flag
-#   in state_user below
 yaml = None
 try: import yaml
 except: pass
@@ -114,7 +112,6 @@ def state_user(statefile='state.yml',
 			else:
 				if not os.path.isfile(statefile_out): state_data = {}
 				else:
-					print(f'loading {statefile_out}')
 					with open(statefile_out,'r') as fp:
 						state_data = yaml.load(fp,Loader=yaml.SafeLoader)
 						if not state_data: state_data = {}

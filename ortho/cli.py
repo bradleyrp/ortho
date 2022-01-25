@@ -17,15 +17,22 @@ def cli_args_to_kwargs(*args,separator='='):
 	parsing anyway. Using this option is relatively elegant.
 	"""
 	kwargs = {}
-	for arg in args:
-		key,val = re.match(f'^(.*?){separator}(.*?)$',arg).groups()
-		val = ast.literal_eval(val)
-		if key in kwargs: 
-			raise KeyError(f'key collision: {key}')
-		kwargs[key] = val
+	arglist = []
+	arglist.extend(args)
+	while arglist:
+		arg = arglist.pop()
+		if isinstance(arg,tuple):
+			arglist.extend(arg)
+		else:
+			key,val = re.match(f'^(.*?){separator}(.*?)$',arg).groups()
+			val = ast.literal_eval(val)
+			if key in kwargs: 
+				raise KeyError(f'key collision: {key}')
+			kwargs[key] = val
 	return kwargs
 
 def click_args_to_kwargs(args_kw='args'):
+	# dev: needs docs
 	def outer(func):
 		def inner(*args,**kwargs):
 			if args_kw in kwargs:
@@ -36,7 +43,10 @@ def click_args_to_kwargs(args_kw='args'):
 				else:
 					return func(*args,**kwargs_out,**kwargs)
 			elif not args:
-				print('no *args in a function wrapped with `click_args_to_kwargs`')
+				print((args,kwargs))
+				raise Exception('no *args in a function wrapped with `click_args_to_kwargs`. to fix this, '
+					'send args_kw to `click_args_to_kwargs` to name the typical *args variable or use the '
+					'current value (%s).'%args_kw)
 			else:
 				kwargs_out = cli_args_to_kwargs(args)
 				return func(**kwargs_out,**kwargs)
