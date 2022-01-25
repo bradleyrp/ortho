@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+"""
+Logging assistance.
+"""
+
 import sys
 import re
 
@@ -16,6 +20,14 @@ else:
 	str_types = (str,)
 basestring = string_types = str_types
 str_types_list = list(str_types)
+
+# the printer function makes the override of print globally accessible and
+#   this prevents issues with numba.core.typing.builtins, @infer_global(print)
+global printer
+
+def printer(*args,**kwargs):
+	"""Dummy printer function."""
+	return print(*args,**kwargs)
 
 def stylized_print(override=False):
 	"""
@@ -40,10 +52,10 @@ def stylized_print(override=False):
 		# hold the standard print
 		_print = print
 		key_leads = ['status','warning','error','note','usage',
-			'exception','except','question','run','tail','watch',
+			'exception','except','question','tail','watch','loading',
 			'bash','debug']
 		key_leads_regex = re.compile(
-			r'^(?:(%s)(?:\s|:\s)?)(.+)$'%'|'.join(key_leads))
+			r'^(?:(%s)(?:\s|:\s))(.+)$'%'|'.join(key_leads))
 
 		def print_stylized(*args,**kwargs):
 			"""Custom print function."""
@@ -59,8 +71,17 @@ def stylized_print(override=False):
 				else: return _print(*args,**kwargs)
 			else: return _print(*args,**kwargs)
 
+		# rename and use an alternate module so that numba not confused
+		print_stylized.__module__ = 'ortho.logs'
+		print_stylized.__name__ = 'printer'
+
 		# export custom print function before other imports
 		# this code ensures that in python 3 we overload print
 		#   while any python 2 code that wishes to use overloaded print
 		#   must of course from __future__ import print_function
 		builtins.print = print_stylized
+		builtins._print_std = _print
+
+		# see comment above regarding numba
+		global printer
+		printer = builtins.print

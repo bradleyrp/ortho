@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+"""
+Interactive execution, reexecution, debugging, and development tools.
+"""
+
 from __future__ import print_function
 import sys,re
 import ast
@@ -8,6 +12,7 @@ import readline
 import rlcompleter
 import traceback
 import code
+import pprint
 
 def say(text,*flags):
 	"""Colorize the text."""
@@ -91,6 +96,11 @@ class ReExec:
 	# naming conventions for commands in the interactive development environment
 	_names = {
 		# reimport all modules
+		# critical note: if you use `reimport`, you must also use `go` in order
+		#   to actually reuse the code. we are not sure why this happens, 
+		#   however, `reimport;go` with `pdb.set_trace` in the reimported 
+		#   modules works perfectly and is a major help during development
+		# dev: document the critical note above and investigate the root cause
 		'reload':'reimport',
 		# the "do" function runs the entire script again, however this can be
 		#   very useful when using the `if 'variable' in globals():` method
@@ -171,16 +181,31 @@ class ReExec:
 	def reload(self):
 		global preloaded_mods
 		preloaded_names = [i.__name__ for i in preloaded_mods]
+		# dev: hardcoded excludes due to numpy errors
+		# numpy does not like to be reimported. when we use `reimport;go` inside
+		#   of an interactive session, we see "ValueError: Only callable can be 
+		#   used as callback" coming from `numpy/core/_ufunc_config.py` whenever
+		#   we try to look at numpy objects in the debugger. we prevent
+		#   reimports here
+		excludes = ['^numpy']
 		import importlib
 		mods_loaded = list(sys.modules.values())
 		failures = []
 		reloaded = []
+		skips = []
 		for module in mods_loaded:
-			if module.__name__ in preloaded_names: continue
+			if module.__name__ in preloaded_names: 
+				skips.append(module.__name__)
+				continue
+			# dev: see above. temporarily removed
+			if any(re.match(regex,module.__name__) 
+				for regex in excludes):
+				continue
 			try:
 				importlib.reload(module)
 				reloaded.append(module.__name__)
-			except: failures.append(module.__name__)
+			except: 
+				failures.append(module.__name__)
 		if failures:
 			print('warning','failed to reload: '+', '.join(failures))
 
@@ -208,8 +233,19 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	`reload`, `repeat`) which streamline development of complex scripts that
 	require lots of calculation. This effectively takes the place of a debugger,
 	however it provides a more native coding experience.
+
+	dev: start with an error and go nowhere
+		a fatal flaw here is that running a script with an error in it on the 
+		first execution then you cannot rerun things because you get the
+		auto-debugger. in fact the auto-debugger prevents you from continuing
+		to run anything, so errors are fatal before you complete one execution
+	dev: when we add a pdb.set_trace to a reimport library we cannot run 
+		commands inside the trace:
+			ValueError: Only callable can be used as callback
+		this means we cannot easily debug and return to interact
 	"""
 	module_host = kwargs.get('module_host',None)
+	onward_kwargs = kwargs.get('onward',{})
 	# save preloaded modules
 	from sys import modules
 	global preloaded_mods
@@ -221,6 +257,9 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	reexec_class = kwargs.pop('reexec_class',ReExec)
 	# previous method: os.system('python -i %s'%(script))
 	out = globals()
+	# allow onward args to be added here
+	# dev: document this use-case from atgizmo.core.thick.cli
+	out.update(**onward_kwargs)
 	# allow for flexible command names in the terminal
 	for key in ['do','redo','reload']:
 		if key in kwargs:
@@ -242,8 +281,18 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	#   one that is symmetric, simulating the act of stepping through code while
 	#   still retaining the native coding experience
 	out['__name__'] = '__main__'
+	# dev: run the code once without main in case there is an error in main,
+	#   then start the interactive session and allow an exception in main to
+	#   continue inside the debugger. this would eliminate a case where an 
+	#   exception in __main__ prevents interactive sessions altogether
+	# let the script know we are ortho in case that is useful when building a
+	#   script that could run with regular CLI arguments or with hardcoded
+	#   tests during development
+	out['___is_ortho'] = True
 	# compatible version of execfile
 	# dev: exec to eval for python <2.7.15. see note above
+	# dev: the following cannot encounter exceptions or we exit. this means that
+	#   when you start an interact session, the code must be basically perfect
 	eval(compile(open(script).read(),filename=script,mode='exec'),out,out)
 	# prepare the interactive session
 	import code
@@ -319,7 +368,7 @@ def debugger():
 	msg = "(auto debug in place)"
 	code.interact(local=ns,banner=msg)
 
-def debugger_click(func):
+def debugger_click(func,with_ctx=False):
 	"""
 	Decorator which sends the user to an interactive session whenever an 
 	exception is encountered as long as the click context which is sent as the
@@ -332,9 +381,14 @@ def debugger_click(func):
 		"""
 		# run the function
 		try:
-			result = func(ctx,*args,**kwargs)
+			if with_ctx: result = func(ctx,*args,**kwargs)
+			# dev: when doing a traceback, indicate that "string" means we are
+			#   executing a script interactively for clarity
+			else: result = func(*args,**kwargs)
 		# option to use the debugger if we have ortho
 		except:
+			detail = pprint.pformat(dict(args=args,kwargs=kwargs))
+			print(f'debugging call to {func.__name__}: {detail}')
 			if ctx.obj['DEBUG']:
 				debugger()
 			else: raise

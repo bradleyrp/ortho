@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+"""
+Locker tools for managing the state and file locks.
+"""
+
 import time
 import os
 import fcntl
@@ -8,6 +12,9 @@ import errno
 import datetime as dt
 import copy
 import json
+import getpass
+
+from .utils import dictdiff
 
 # click is part of the cli extra for ortho
 try: import click
@@ -52,37 +59,47 @@ class SimpleFlock:
 
 # yaml is an optional handler below
 # dev: generalize the reader/writer for the state
+# dev: make the cli requirement for yaml more consistent
+#   note that we use yaml when we use the unpack flag
+#   in state_user below
 yaml = None
 try: import yaml
 except: pass
 
-def state_user(statefile='state.yml',
-	lock=False,log=False,unpack=False,
-	dest='statefile',statefile_ctx='STATEFILE',
-	click_pass=False):
+def statefile(name='state.yml',
+	lock=True,log=False,unpack=True,watch=True,dest='state',
+	statefile_ctx='STATEFILE',statefile_infer=None,
+	click_pass=False,track=True,hook=None,verbose=False,loader=None):
 	"""
 	Decorator to supervise a state with file locks and loggin.
 
 	This includes a connection to the click context so you can get the statefile
 	name from the click context.
 	"""
+	# dev: is the hook variable deprecated?
+	if track and not unpack:
+		raise Exception('you must set unpack if you want to track')
+	if track and not watch:
+		raise Exception('you must set watch if you want to track')
+	if unpack and not yaml:
+		raise Exception('unpack requires yaml')
+	if loader and not callable(loader):
+		raise Exception('loader must be a function')
 
-	def repack_state(outgoing,statefile_out,fname,state_ptr):
+	def repack_state(state_ptr,statefile_out,fname):
 		"""Write the state to the statefile."""
-		if outgoing is None:
-			# the outgoing dict is a pointer to the state we unpacked
-			outgoing = state_ptr	
-		elif not isinstance(outgoing,dict):
-			print('error: outgoing object: %s'%str(outgoing))
-			raise Exception(f'function {fname} '
-				'returned an object that is not a dict but '
-				'optima_state was called with unpack so we '
-				'cannot repack the data properly. see error above.')
+		if not isinstance(state_ptr,dict):
+			raise Exception(
+				'we cannot repack the state because it is not a dict: %s'%
+				str(state_ptr))
+		# generate the output first otherwise you might risk blanking the file
+		output = yaml.dump(state_ptr)
 		with open(statefile_out,'w') as fp:
-			fp.write(yaml.dump(outgoing))
+			fp.write(output)
 
 	def wrapper(func):
 		def inner(*args,**kwargs):
+			statefile_out = None
 			# accept the click context as the leading argument in case we are
 			#   using the context to convey the statefile as a CLI argument
 			if click and len(args)>0 and isinstance(args[0],click.core.Context):
@@ -98,22 +115,52 @@ def state_user(statefile='state.yml',
 				if click_pass:
 					kwargs['ctx'] = ctx
 				args = args[1:]
-			statefile_out = ctx.obj.get(statefile_ctx,statefile)
+				statefile_out = ctx.obj.get(statefile_ctx,name)
+			if statefile_infer:
+				statefile_out = statefile_infer()
 			if not statefile_out:
-				raise Exception('you must send the statefile through the CLI '
-					'(via --state) or via the "statefile" kwarg to the '
-					'decorator')
+				# use the default name if we did not get the statefile from the 
+				#   ctx which comes from a parent click command or the 
+				#   statefile_infer function
+				statefile_out = name
 			if 'statefile' in kwargs:
 				raise Exception('argument collision on "statefile"')
+			# fully resolve the statefile_out path, assume to be relative to cwd
+			statefile_out = os.path.abspath(os.path.expanduser(statefile_out))
+			# the lock file is hidden in the same folder
+			statefile_lock = os.path.join(
+				os.path.dirname(statefile_out),'.%s.lock'%
+				os.path.basename(statefile_out))
+			# the watchfile is always alongside the statefile
+			#   otherwise we do not have an easy way to control its location
+			watchfile_out = os.path.join(os.path.dirname(statefile_out),'%s.watch'%
+				os.path.basename(statefile_out))
 			# if we are not unpacking, we just pass the statefile
 			if not unpack:
-				# put the statefile name in the kwarg
+				# put the state name in the kwarg
 				kwargs[dest] = statefile_out
 			else:
-				if not os.path.isfile(statefile_out): state_data = {}
+				# initialize the state as a blank dictionary
+				if not os.path.isfile(statefile_out): 
+					# it is essential that we initialize this here so the consumer can
+					#   modify it. the consumer should add a token that signals initialization
+					#   if it needs to control initialization. we cannot use the null type to do this
+					#   otherwise we would not be able to modify the state in place, and we would
+					#   then have to handle return functions very carefully. hence we initialize here
+					#   and let the consumer decide what happens next
+					state_data = {}
 				else:
+					if verbose: print(f'loading {statefile_out}')
+
+					# hook to add constructors to yaml
+					# alternative is to use ortho.YAMLObject in your code
+					# note that you cannot use the default SafeLoader below
+					#   while also using YAMLObject to make YAML constructors
+					if loader: loader_out = loader()
+					else: loader_out = yaml.SafeLoader
+
 					with open(statefile_out,'r') as fp:
-						state_data = yaml.load(fp,Loader=yaml.SafeLoader)
+						state_data = yaml.load(fp,Loader=loader_out)
 						if not state_data: state_data = {}
 				# load the state data into the destination kwarg
 				kwargs[dest] = state_data
@@ -122,51 +169,72 @@ def state_user(statefile='state.yml',
 				raise Exception('you must lock if you log')
 			elif lock and log:
 				with SimpleFlock(
-					f'.{statefile_out}.lock',timeout=3) as sf:
-					print(f'status: locked on {statefile_out}')
+					statefile_lock,timeout=3) as sf:
+					if verbose: print(f'status: locked {statefile_out}')
 					# dev: should we set a timezone
 					ts = dt.datetime.fromtimestamp(
 						time.time()).strftime('%Y.%m.%d.%H%M')
 					log_detail = dict(
 						call=func.__name__,
 						args=copy.deepcopy(args),
+						user=getpass.getuser(),
 						kwargs=copy.deepcopy(kwargs),
 						when=ts)
+					# do not log the entire state in the watch file. the state 
+					#   is automatically included in the kwargs when we decorate
+					#   the functions that use the state, so it would otherwise 
+					#   appear here unless we remove it
+					state_omit = log_detail['kwargs'].pop('dest',{})
 					# pop the click context from the copy otherwise we cannot 
 					#   serialize the context. the `optima_state` function is
 					#   mean to handle user interface functions
 					try: log_detail['kwargs'].pop('ctx')
 					except: pass
 					try: 
+						if unpack and track:
+							# tracking changes by copying the previous state
+							state_before = copy.deepcopy(state_data)
+						# dev: warn that we are discarding the return value?
 						this = func(*args,**kwargs)
 						if unpack:
+							if track:
+								diff = dictdiff(state_before,state_data)
+								log_detail['state_diff'] = diff
 							repack_state(
-								outgoing=this,
 								statefile_out=statefile_out,
 								fname=func.__name__,
 								state_ptr=state_data)
 					except:
-						log_detail['fail'] = True
-						with open(f'{statefile_out}.watch','a') as fp:
-							fp.write(json.dumps(log_detail)+'\n')
+						if watch:
+							log_detail['fail'] = True
+							with open(watchfile_out,'a') as fp:
+								# ensure we can serialize any classes
+								# via: https://stackoverflow.com/a/64469761
+								fp.write(json.dumps(
+									log_detail,default=vars)+'\n')
 						raise
 					else:
-						with open(f'{statefile_out}.watch','a') as fp:
-							fp.write(json.dumps(log_detail)+'\n')
-					print('status: releasing lock')
+						if watch:
+							with open(watchfile_out,'a') as fp:
+								# ensure we can serialize any classes
+								# via: https://stackoverflow.com/a/64469761
+								fp.write(json.dumps(
+									log_detail,default=vars)+'\n')
+					if verbose: print('status: releasing lock ')
 					return this
 			elif lock and not log: 
 				with SimpleFlock(
-					f'.{statefile_out}.lock',timeout=3) as sf:
-					print(f'status: locked on {statefile_out}')
+					statefile_lock,timeout=3) as sf:
+					if verbose: print(f'status: locked {statefile_out}')
 					this = func(*args,**kwargs)
+					# dev: protect against return values that go nowhere? warning?	
 					if unpack:
 						repack_state(
-							outgoing=this,
+							# the state is modified in place
 							statefile_out=statefile_out,
 							fname=func.__name__,
 							state_ptr=state_data)
-					print('status: releasing lock')
+					if verbose: print('status: releasing lock {statefile_out}')
 					return this
 			else:
 				this = func(*args,**kwargs)
@@ -182,19 +250,3 @@ def state_user(statefile='state.yml',
 		inner.__doc__ = func.__doc__
 		return inner
 	return wrapper
-
-def element_cli(func_real):
-	"""
-	Decorator used to separate the CLI interface from the elements.
-	This decorator replaces the decorated function with the argument (which should be a function) so that we
-	can separate the click CLI interface from the function itself. This facilitates modular code.	
-	"""
-	def outer(func):
-		def inner(*args,**kwargs):
-			# dev: check that func_real is a function?
-			return func_real(*args,**kwargs)
-		inner.__name__ = func_real.__name__
-		inner.__doc__ = func_real.__doc__
-		return inner
-	return outer
-

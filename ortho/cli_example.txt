@@ -22,6 +22,8 @@ These ingredients will enable the use of `python -m my_package <args>` along
 with `<bin_name> <args>` from the terminal.
 """
 
+# see atgizmo commit `46ab90e` for an example of nested subcommands
+
 import sys
 import traceback
 import code
