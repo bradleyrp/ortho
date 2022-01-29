@@ -21,8 +21,14 @@ def code_current(source,path,branch=None,strict=True):
 			f' -b {branch}' if branch else ''),announce=True)	
 	# make sure the code is up to date otherwise
 	else:
-		if branch:
-			raise NotImplementedError('dev: need to check branch on code_current')
+		result = bash(f'git -C {path} branch')
+		stdout = result['stdout']
+		branches = [re.match('(?P<active>\*)?\s+(?P<name>.*?)\s*$',i).groupdict() 
+			for i in stdout.splitlines()]
+		branches = [(i['name'],i.get('active','')=='*') for i in branches]
+		branch_active, = [i for i,j in branches if j]
+		if branch != branch_active:
+			raise NotImplementedError('dev: code_current can only check the branch, not switch it')
 		# via: https://stackoverflow.com/a/52307619/3313859
 		result = bash(f'git -C {path} remote show origin',
 			permit_fail=True,quiet=True)
