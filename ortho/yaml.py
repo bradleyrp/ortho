@@ -22,11 +22,16 @@ class YAMLObjectOverride(yaml.YAMLObject):
 		elif node.__class__.__name__=='MappingNode':
 			args_out = loader.construct_mapping(node, deep=True)
 			kind = 'mapping'
+		elif node.__class__.__name__=='SequenceNode':
+			args_out = loader.construct_sequence(node, deep=True)
+			kind = 'sequence'
 		else:
 			raise Exception(f'invalid node type: {node}')
 		try:
 			if kind == 'scalar':
 				return cls(args_out)
+			elif kind == 'sequence':
+				return cls(*args_out)
 			elif kind == 'mapping':
 				return cls(**args_out)
 			else: raise Exception

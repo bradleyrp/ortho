@@ -7,7 +7,7 @@ __all__ = [
 	'ortho_print','printer',
 	'debugger','debugger_click',
 	'statefile','SimpleFlock',
-	'identity','redirect','scripter',
+	'identity','redirect','decorate_redirect','scripter',
 	'catalog','delve','delvetry','delveset','script_packer',
 	'Struct','get_cpu_cores','clipboard',
 	'bash','command_check',
@@ -30,6 +30,7 @@ from .locker import statefile
 from .locker import SimpleFlock
 from .cli import identity
 from .cli import redirect
+from .cli import decorate_redirect
 from .cli import scripter
 from .utils import catalog
 from .utils import delve

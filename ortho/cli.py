@@ -80,10 +80,33 @@ def redirect(func_real):
 		# crucially we use the name of the dummy function as the exposed name
 		#   which means that you can rename the function where it is decorated
 		#   with other click functions
+		# usage note: this was first used in atgizmo.optima.cli and then we included it in the
+		#   decorate_redirect function below to generalize the atgizmo.optima.cli.decorate_here
+		#   wrapper ca 2022.01.28. we have some function naming issues but otherwise both cases
+		#   work well enough and have an elegant interface. if it quacks like a duck
 		inner.__name__ = func.__name__
 		inner.__doc__ = func_real.__doc__
 		return inner
 	return outer
+
+def decorate_redirect(func_real,*args):
+	"""Ortho cli decorator which supplies standard features."""
+	real_name = None
+	# we discard func func_real and run real_func instead so we can separate CLI from utility functions
+	def inner(func):
+		if not is_empty_function(func):
+			raise Exception('when using decorate_redirect, the function must be empty')
+		f = func_real
+		# we compose functions backwards and end with the redirect
+		for f_this in args[::-1]:
+			if f_this.__name__ == 'debugger_click': 
+				f = f_this(f,with_ctx=True)
+			else: 
+				f = f_this(f)
+		return f
+	inner.__name__ = func_real.__name__
+	inner.__doc__ = func_real.__doc__
+	return inner
 
 def identity(func):
 	"""The identity decorator."""
