@@ -12,16 +12,18 @@ def get_git_hash(path):
 	result = bash(f'git -C {path} rev-parse HEAD',quiet=True)
 	return result['stdout'].strip()
 
-def code_current(source,path,strict=True):
+def code_current(source,path,branch=None,strict=True):
 	"""Check or clone the source code."""
 	path_abs = os.path.abspath(path)
 	# if the path is absent we clone
 	if not os.path.isdir(path):
-		bash(f'git clone {source} {path}',announce=True)	
+		bash(f'git clone {source} {path}'+(
+			f' -b {branch}' if branch else ''),announce=True)	
 	# make sure the code is up to date otherwise
 	else:
+		if branch:
+			raise NotImplementedError('dev: need to check branch on code_current')
 		# via: https://stackoverflow.com/a/52307619/3313859
-		# via: https://stackoverflow.com/a/43115337/3313859
 		result = bash(f'git -C {path} remote show origin',
 			permit_fail=True,quiet=True)
 		if re.findall('local out of date',result['stdout']):
