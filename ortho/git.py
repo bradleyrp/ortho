@@ -27,7 +27,7 @@ def code_current(source,path,branch=None,strict=True):
 			for i in stdout.splitlines()]
 		branches = [(i['name'],i.get('active','')=='*') for i in branches]
 		branch_active, = [i for i,j in branches if j]
-		if branch != branch_active:
+		if branch and branch != branch_active:
 			raise NotImplementedError('dev: code_current can only check the branch, not switch it. '
 				f'note: branch={branch}, branch_active={branch_active}')
 		# via: https://stackoverflow.com/a/52307619/3313859
