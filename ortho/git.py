@@ -28,7 +28,8 @@ def code_current(source,path,branch=None,strict=True):
 		branches = [(i['name'],i.get('active','')=='*') for i in branches]
 		branch_active, = [i for i,j in branches if j]
 		if branch != branch_active:
-			raise NotImplementedError('dev: code_current can only check the branch, not switch it')
+			raise NotImplementedError('dev: code_current can only check the branch, not switch it. '
+				f'note: branch={branch}, branch_active={branch_active}')
 		# via: https://stackoverflow.com/a/52307619/3313859
 		result = bash(f'git -C {path} remote show origin',
 			permit_fail=True,quiet=True)
