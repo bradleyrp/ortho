@@ -38,6 +38,14 @@ text_ortho_null = """
 hello: there
 """
 
+text_ortho_merge_base = """
+hello: &hello wilkommen
+"""
+
+text_ortho_merge_mod = """
+hello: *hello
+"""
+
 class ExampleStd(yaml.YAMLObject):
 	yaml_tag = '!example_std'
 	def __init__(self,arg,kwarg=None):
@@ -54,8 +62,8 @@ class ExampleOrtho(YAMLObjectOrtho):
 class ExampleOrthoNull(YAMLObjectOrtho):
 	yaml_tag = '!example_ortho_null'
 
-class TestHandler(unittest.TestCase):
-	"""Test YAML constructors."""
+class OrthoYAMLOverrides(unittest.TestCase):
+	"""Test YAML constructors, namely the overrides in ortho.YAMLObject."""
 	def test_yaml_constructor_init(self):
 		"""
 		A normal YAML constructor ignores the __init__ method.
