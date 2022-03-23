@@ -340,11 +340,13 @@ def interact(script='dev.py',hooks=None,**kwargs):
 				name=reexec_class._names['redo']),
 			reload = InteractiveCommand(func=ie.reload,
 				name=reexec_class._names['reload']),)
+		#! issue: the following is overwriting key,val so we are testing
 		for key,val in reexec_class._names.items():
 			out[val] = out.pop(key)
 	# consolidate, add tab completion
 	vars = globals()
-	vars.update(locals())
+	# filter out the "key" and "val" keys because they leak into the namespace
+	vars.update(dict([(i,j) for i,j in locals().items() if i not in ['key','val']]))
 	vars.update(**vars.pop('out'))
 	readline.set_completer(rlcompleter.Completer(vars).complete)
 	readline.parse_and_bind("tab: complete")
