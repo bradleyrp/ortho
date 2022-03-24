@@ -49,7 +49,7 @@ try:
 		raise ModuleNotFoundError('ruamel.yaml version is insufficient')
 
 # custom ruamel importer for compatibility with overspack and Spack
-except ModuleNotFoundError: 
+except (ModuleNotFoundError,ImportError): 
 
 	from .yaml import get_real_ruamel
 	yamlr = get_real_ruamel(parent=True)
