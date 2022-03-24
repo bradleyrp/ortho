@@ -79,31 +79,29 @@ YAMLObject = YAMLObjectOverride
 
 # to import and apply tags we need to clean
 
-def recursive_clean(item):
+def yaml_clean(item):
 	"""
 	Clean (i.e. resolve) YAML objects into Python objects.
 	"""
 	if isinstance(item,(tuple,list)):
 		up = []
 		for i in item:
-			up.append(recursive_clean(i))
+			up.append(yaml_clean(i))
 	elif isinstance(item,dict):
 		up = {}
 		for k,v in item.items():
-			up[k] = recursive_clean(v)
+			up[k] = yaml_clean(v)
 	else:
 		up = item.clean if hasattr(item,'clean') else item
 	return up
 
-# dev: this class decorator only cleans incoming arguments and may not be
-#   generally useful
-def decorate_clean_class(func):
+def yaml_clean_class(func):
 	"""
 	Decorator to ensure extension classes clean incoming objects.
 	"""
 	def inner(self,*args,**kwargs):
-		args = recursive_clean(args)
-		kwargs = recursive_clean(kwargs)
+		args = yaml_clean(args)
+		kwargs = yaml_clean(kwargs)
 		return func(self,*args,**kwargs)
 	inner.__name__ = func.__name__
 	inner.__doc__ = func.__doc__
