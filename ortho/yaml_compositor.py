@@ -115,7 +115,14 @@ class ExcludingConstructor(yamlr.constructor.Constructor):
 def include_compositor(self, anchor):
 	event = self.parser.get_event()
 	yaml = self.loader.fork()
+	# we use a path relative to the original call however to avoid recursion when using subdirectories
+	#   we also try a path relative to the cwd
 	path = os.path.join(os.path.dirname(self.loader.reader.name), event.value)
+	if not os.path.isfile(path):
+		path_alt = os.path.join(os.getcwd(), event.value)
+		if not os.path.isfile(path_alt):
+			raise Exception(f'failed to find include paths at either "{path}" or "{path_alt}"')
+		path = path_alt
 	with open(path) as f:
 		return yaml.compose(f)
 
