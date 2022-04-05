@@ -89,7 +89,7 @@ def redirect(func_real):
 		return inner
 	return outer
 
-def decorate_redirect(func_real,*args,with_ctx=True):
+def decorate_redirect(func_real,*args,with_ctx=None):
 	"""Ortho cli decorator which supplies standard features."""
 	# set with_ctx if ortho.statefile follows, otherwise set it to false
 	real_name = None
@@ -99,9 +99,19 @@ def decorate_redirect(func_real,*args,with_ctx=True):
 			raise Exception('when using decorate_redirect, the function must be empty')
 		f = func_real
 		# we compose functions backwards and end with the redirect
-		for f_this in args[::-1]:
+		for fnum,f_this in enumerate(args[::-1]):
 			if f_this.__name__ == 'debugger_click': 
-				f = f_this(f,with_ctx=with_ctx)
+				if fnum == 0 and with_ctx is None:
+					# if the debugger_click is first after reversing the order 
+					#   then there is probably no statefile, which would use 
+					#   the debugger context. hence we continue without context
+					#   unless we are told otherwise
+					with_ctx_here = False
+				elif with_ctx != None:
+					with_ctx_here = with_ctx
+				else: 
+					with_ctx_here = True
+				f = f_this(f,with_ctx=with_ctx_here)
 			else: 
 				f = f_this(f)
 		return f
