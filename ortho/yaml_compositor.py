@@ -98,24 +98,31 @@ class ExcludingConstructor(yamlr.constructor.Constructor):
 		for nodeType in nodeTypes:
 			cls.filters[nodeType].append(filter)
 
-	def construct_mapping(self, node):
+	def construct_mapping(self, node, deep=False):
 		node.value = [(key_node, value_node) 
 			for key_node, value_node in node.value
 				if not any(f(key_node, value_node) 
 			for f in self.filters[MappingNode])]
-		return super().construct_mapping(node)
+		return super().construct_mapping(node, deep=deep)
 	
-	def construct_sequence(self, node):
+	def construct_sequence(self, node, deep=False):
 		node.value = [value_node 
 			for value_node in node.value 
 				if not any(f(value_node) 
 			for f in self.filters[SequenceNode])]
-		return super().construct_sequence(node)
+		return super().construct_sequence(node, deep=deep)
 
 def include_compositor(self, anchor):
 	event = self.parser.get_event()
 	yaml = self.loader.fork()
+	# we use a path relative to the original call however to avoid recursion when using subdirectories
+	#   we also try a path relative to the cwd
 	path = os.path.join(os.path.dirname(self.loader.reader.name), event.value)
+	if not os.path.isfile(path):
+		path_alt = os.path.join(os.getcwd(), event.value)
+		if not os.path.isfile(path_alt):
+			raise Exception(f'failed to find include paths at either "{path}" or "{path_alt}"')
+		path = path_alt
 	with open(path) as f:
 		return yaml.compose(f)
 
