@@ -89,8 +89,9 @@ def redirect(func_real):
 		return inner
 	return outer
 
-def decorate_redirect(func_real,*args):
+def decorate_redirect(func_real,*args,with_ctx=True):
 	"""Ortho cli decorator which supplies standard features."""
+	# set with_ctx if ortho.statefile follows, otherwise set it to false
 	real_name = None
 	# we discard func func_real and run real_func instead so we can separate CLI from utility functions
 	def inner(func):
@@ -100,7 +101,7 @@ def decorate_redirect(func_real,*args):
 		# we compose functions backwards and end with the redirect
 		for f_this in args[::-1]:
 			if f_this.__name__ == 'debugger_click': 
-				f = f_this(f,with_ctx=True)
+				f = f_this(f,with_ctx=with_ctx)
 			else: 
 				f = f_this(f)
 		return f
