@@ -23,7 +23,7 @@ def code_current(source,path,branch=None,strict=True):
 	else:
 		result = bash(f'git -C {path} branch')
 		stdout = result['stdout']
-		branches = [re.match('(?P<active>\*)?\s+(?P<name>.*?)\s*$',i).groupdict() 
+		branches = [re.match('(?P<active>\*)?\s*(?P<name>.*?)\s*$',i).groupdict() 
 			for i in stdout.splitlines()]
 		branches = [(i['name'],i.get('active','')=='*') for i in branches]
 		branch_active, = [i for i,j in branches if j]
