@@ -244,15 +244,20 @@ def statefile(name='state.yml',
 				except:
 					print(f'error: failed to use SimpleFlock on {statefile_lock}')
 					raise
+			# the no-lock version also only writes the data if it changes, hence this is useful for state
+			#   files which are seldom updated and often read
 			else:
+				if unpack:
+					state_before = copy.deepcopy(state_data)
 				this = func(*args,**kwargs)
 				# dev: calls to unpack seem repetitive. not sure how to fix
 				if unpack:
-					repack_state(
-						outgoing=this,
-						statefile_out=statefile_out,
-						fname=func.__name__,
-						state_ptr=state_data)
+					diff = dictdiff(state_before,state_data)
+					if diff:
+						repack_state(
+							statefile_out=statefile_out,
+							fname=func.__name__,
+							state_ptr=state_data)
 				return this
 		inner.__name__ = func.__name__
 		inner.__doc__ = func.__doc__
