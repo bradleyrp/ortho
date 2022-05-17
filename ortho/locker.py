@@ -168,74 +168,82 @@ def statefile(name='state.yml',
 			if log and not lock:
 				raise Exception('you must lock if you log')
 			elif lock and log:
-				with SimpleFlock(
-					statefile_lock,timeout=3) as sf:
-					if verbose: print(f'status: locked {statefile_out}')
-					# dev: should we set a timezone
-					ts = dt.datetime.fromtimestamp(
-						time.time()).strftime('%Y.%m.%d.%H%M')
-					log_detail = dict(
-						call=func.__name__,
-						args=copy.deepcopy(args),
-						user=getpass.getuser(),
-						kwargs=copy.deepcopy(kwargs),
-						when=ts)
-					# do not log the entire state in the watch file. the state 
-					#   is automatically included in the kwargs when we decorate
-					#   the functions that use the state, so it would otherwise 
-					#   appear here unless we remove it
-					state_omit = log_detail['kwargs'].pop('dest',{})
-					# pop the click context from the copy otherwise we cannot 
-					#   serialize the context. the `optima_state` function is
-					#   mean to handle user interface functions
-					try: log_detail['kwargs'].pop('ctx')
-					except: pass
-					try: 
-						if unpack and track:
-							# tracking changes by copying the previous state
-							state_before = copy.deepcopy(state_data)
-						# dev: warn that we are discarding the return value?
+				try:
+					with SimpleFlock(
+						statefile_lock,timeout=3) as sf:
+						if verbose: print(f'status: locked {statefile_out}')
+						# dev: should we set a timezone
+						ts = dt.datetime.fromtimestamp(
+							time.time()).strftime('%Y.%m.%d.%H%M')
+						log_detail = dict(
+							call=func.__name__,
+							args=copy.deepcopy(args),
+							user=getpass.getuser(),
+							kwargs=copy.deepcopy(kwargs),
+							when=ts)
+						# do not log the entire state in the watch file. the state 
+						#   is automatically included in the kwargs when we decorate
+						#   the functions that use the state, so it would otherwise 
+						#   appear here unless we remove it
+						state_omit = log_detail['kwargs'].pop('dest',{})
+						# pop the click context from the copy otherwise we cannot 
+						#   serialize the context. the `optima_state` function is
+						#   mean to handle user interface functions
+						try: log_detail['kwargs'].pop('ctx')
+						except: pass
+						try: 
+							if unpack and track:
+								# tracking changes by copying the previous state
+								state_before = copy.deepcopy(state_data)
+							# dev: warn that we are discarding the return value?
+							this = func(*args,**kwargs)
+							if unpack:
+								if track:
+									diff = dictdiff(state_before,state_data)
+									log_detail['state_diff'] = diff
+								repack_state(
+									statefile_out=statefile_out,
+									fname=func.__name__,
+									state_ptr=state_data)
+						except:
+							if watch:
+								log_detail['fail'] = True
+								with open(watchfile_out,'a') as fp:
+									# ensure we can serialize any classes
+									# via: https://stackoverflow.com/a/64469761
+									fp.write(json.dumps(
+										log_detail,default=vars)+'\n')
+							raise
+						else:
+							if watch:
+								with open(watchfile_out,'a') as fp:
+									# ensure we can serialize any classes
+									# via: https://stackoverflow.com/a/64469761
+									fp.write(json.dumps(
+										log_detail,default=vars)+'\n')
+						if verbose: print('status: releasing lock ')
+						return this
+				except:
+					print(f'error: failed to use SimpleFlock on {statefile_lock}')
+					raise
+			elif lock and not log: 
+				try:
+					with SimpleFlock(
+						statefile_lock,timeout=3) as sf:
+						if verbose: print(f'status: locked {statefile_out}')
 						this = func(*args,**kwargs)
+						# dev: protect against return values that go nowhere? warning?	
 						if unpack:
-							if track:
-								diff = dictdiff(state_before,state_data)
-								log_detail['state_diff'] = diff
 							repack_state(
+								# the state is modified in place
 								statefile_out=statefile_out,
 								fname=func.__name__,
 								state_ptr=state_data)
-					except:
-						if watch:
-							log_detail['fail'] = True
-							with open(watchfile_out,'a') as fp:
-								# ensure we can serialize any classes
-								# via: https://stackoverflow.com/a/64469761
-								fp.write(json.dumps(
-									log_detail,default=vars)+'\n')
-						raise
-					else:
-						if watch:
-							with open(watchfile_out,'a') as fp:
-								# ensure we can serialize any classes
-								# via: https://stackoverflow.com/a/64469761
-								fp.write(json.dumps(
-									log_detail,default=vars)+'\n')
-					if verbose: print('status: releasing lock ')
-					return this
-			elif lock and not log: 
-				with SimpleFlock(
-					statefile_lock,timeout=3) as sf:
-					if verbose: print(f'status: locked {statefile_out}')
-					this = func(*args,**kwargs)
-					# dev: protect against return values that go nowhere? warning?	
-					if unpack:
-						repack_state(
-							# the state is modified in place
-							statefile_out=statefile_out,
-							fname=func.__name__,
-							state_ptr=state_data)
-					if verbose: print('status: releasing lock {statefile_out}')
-					return this
+						if verbose: print('status: releasing lock {statefile_out}')
+						return this
+				except:
+					print(f'error: failed to use SimpleFlock on {statefile_lock}')
+					raise
 			else:
 				this = func(*args,**kwargs)
 				# dev: calls to unpack seem repetitive. not sure how to fix
