@@ -346,7 +346,8 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	# consolidate, add tab completion
 	vars = globals()
 	# filter out the "key" and "val" keys because they leak into the namespace
-	vars.update(dict([(i,j) for i,j in locals().items() if i not in ['key','val']]))
+	vars.update(dict([(i,j) for i,j in locals().items() if i not in [
+		'key','val','onward_kwargs']]))
 	vars.update(**vars.pop('out'))
 	readline.set_completer(rlcompleter.Completer(vars).complete)
 	readline.parse_and_bind("tab: complete")

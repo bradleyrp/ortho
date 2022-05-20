@@ -226,7 +226,7 @@ class StandardYAMLTag:
 	"""
 	Example of a standard YAML tag, compatible with pyyaml and also
 	ruamel.yaml and also able to be parsed by collect_anchors. 
-	We use string contatenation as an example
+	We use string concatenation as an example
 	"""
 	yaml_tag = '!cat'
 	char = ' '
