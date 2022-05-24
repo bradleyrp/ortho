@@ -224,7 +224,7 @@ def statefile(name='state.yml',
 						if verbose: print('status: releasing lock ')
 						return this
 				except:
-					print(f'error: failed to use SimpleFlock on {statefile_lock}')
+					print(f'warning: an exception interrupted SimpleFlock on {statefile_lock}')
 					raise
 			elif lock and not log: 
 				try:
@@ -242,7 +242,7 @@ def statefile(name='state.yml',
 						if verbose: print('status: releasing lock {statefile_out}')
 						return this
 				except:
-					print(f'error: failed to use SimpleFlock on {statefile_lock}')
+					print(f'warning: an exception interrupted SimpleFlock on {statefile_lock}')
 					raise
 			# the no-lock version also only writes the data if it changes, hence this is useful for state
 			#   files which are seldom updated and often read
