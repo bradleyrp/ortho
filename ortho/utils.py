@@ -165,7 +165,7 @@ def clipboard(cmd,strict=False):
 			sys.platform)
 	return
 
-def confirm(message=None):
+def confirm(message=None,twice=False):
 	"""
 	Generic function to check with the user.
 	"""
@@ -174,5 +174,6 @@ def confirm(message=None):
 	if not go:
 		print('error: aborting')
 		return False
+	if not twice: return True
 	sure = True if input("%s (y/N) " % '[QUESTION] confirmed?').lower() == 'y' else False
 	if go and sure: return True
