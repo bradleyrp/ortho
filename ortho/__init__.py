@@ -43,6 +43,7 @@ from .utils import script_packer
 from .utils import Struct
 from .utils import get_cpu_cores
 from .utils import clipboard
+from .utils import confirm
 from .diagnose import linetime
 from .bash import bash
 from .bash import command_check

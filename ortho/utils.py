@@ -164,3 +164,15 @@ def clipboard(cmd,strict=False):
 		raise NotImplementedError('clipboard not configured for platform: %s'%
 			sys.platform)
 	return
+
+def confirm(message=None):
+	"""
+	Generic function to check with the user.
+	"""
+	if message != None: status(message)
+	go = True if raw_input("%s (y/N) " % 'continue?').lower() == 'y' else False
+	if not go:
+		print 'aborting' 
+		return False
+	sure = True if raw_input("%s (y/N) " % 'confirmed?').lower() == 'y' else False
+	if go and sure: return True
