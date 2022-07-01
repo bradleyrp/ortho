@@ -171,7 +171,8 @@ def confirm(message=None,twice=False):
 	"""
 	Generic function to check with the user.
 	"""
-	if message != None: print_function(message)
+	# dev: this does not use the stylized print from ortho.logs
+	if message != None: print(message)
 	go = True if input("%s (y/N) " % '[QUESTION] continue?').lower() == 'y' else False
 	if not go:
 		print('error: aborting')
