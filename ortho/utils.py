@@ -169,10 +169,10 @@ def confirm(message=None):
 	"""
 	Generic function to check with the user.
 	"""
-	if message != None: status(message)
-	go = True if raw_input("%s (y/N) " % 'continue?').lower() == 'y' else False
+	if message != None: print(message)
+	go = True if raw_input("%s (y/N) " % '[QUESTION] continue?').lower() == 'y' else False
 	if not go:
-		print('aborting')
+		print('error: aborting')
 		return False
-	sure = True if raw_input("%s (y/N) " % 'confirmed?').lower() == 'y' else False
+	sure = True if raw_input("%s (y/N) " % '[QUESTION] confirmed?').lower() == 'y' else False
 	if go and sure: return True
