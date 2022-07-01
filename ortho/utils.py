@@ -172,7 +172,7 @@ def confirm(message=None):
 	if message != None: status(message)
 	go = True if raw_input("%s (y/N) " % 'continue?').lower() == 'y' else False
 	if not go:
-		print 'aborting' 
+		print('aborting')
 		return False
 	sure = True if raw_input("%s (y/N) " % 'confirmed?').lower() == 'y' else False
 	if go and sure: return True
