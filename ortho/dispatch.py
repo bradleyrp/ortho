@@ -58,9 +58,12 @@ def introspect_function(func,**kwargs):
 ### HANDLER: class for multiple-dispatch by kwargs keys
 
 handler_explain = """\
+The `Handler` class is designed to perform multiple dispatch on class methods by
+keyword argument name, not type.
+
 The `Handler` class allows the subclass to define several similar methods \
 which all take different arguments. When the class instance is "solved" via \
-the `solve` property, the Handler selects the right functionl. The _protected \
+the `solve` property, the Handler selects the right function. The _protected \
 keys are diverted into attributes common to all child class instances. For \
 example the name and meta flags are common to all."""
 
@@ -68,7 +71,11 @@ class Handler(object):
 	_is_Handler = True
 	_taxonomy = {}
 	# internals map to special structures in the Handler level
-	_internals = {'name':'name','meta':'meta'}
+	# recently modified this so that we use underscores to distinguish these 
+	#   items, since "name" is a very common key. this might break some 
+	#   backwards compatibility with older codes which I am happy to 
+	#   troubleshoot
+	_internals = {'name':'_name','meta':'_meta'}
 	# whether to allow inexact matching (we still prefer strict matching)
 	lax = True
 	# report keys
@@ -251,7 +258,8 @@ class Handler(object):
 		"""Look at the subclass-specific parts of the object."""
 		#! this is under development
 		if hasattr(self,'_novel'): 
-			report = dict(object=dict(self=dict([(i,getattr(self,i)) for i in self._novel])))
+			report = dict(object=dict(self=dict([(i,getattr(self,i)) 
+				for i in self._novel])))
 			if self.meta: report['object']['meta'] = self.meta
 			report['object']['name'] = self.name
 			# dev: previously used treeview

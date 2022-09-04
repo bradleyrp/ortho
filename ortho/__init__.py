@@ -14,7 +14,9 @@ __all__ = [
 	'bash',
 	'meta_hasher','dispatcher','Dispatcher','Handler','introspect_function',
 	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
+	'YAMLDocumentBuilder',
 	'yaml_clean','yaml_clean_class',
+	'treeview',
 	# we include yaml_include items manually 
 	#   for now e.g. ortho.yaml_include.YAML
 	'code_current','get_git_hash',
@@ -55,11 +57,13 @@ from .dispatch import introspect_function
 from .yaml import YAMLObject
 from .yaml import YAMLIncludeBase
 from .yaml import YAMLIncludeBaseSafe
+from .yaml_builder import YAMLDocumentBuilder
 from .yaml import yaml_clean
 from .yaml import yaml_clean_class
 from .git import code_current
 from .git import get_git_hash
 from .functional import compose
+from .terminal_view import treeview
 
 # definitions
 from .logs import str_types

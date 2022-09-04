@@ -10,8 +10,8 @@ from .yaml import collect_anchors
 from .yaml import get_real_ruamel
 from .yaml import YAMLAnchorInclude
 from .yaml import YAMLIncludeBase
-from .yaml import recursive_clean
-from .yaml import decorate_clean_class
+from .yaml import yaml_clean
+from .yaml import yaml_clean_class
 from .yaml_include import YAML as YAMLI
 
 # dev: note no testing of YAMLIncludeBase yet, which requires files
@@ -264,7 +264,7 @@ class YAMLTalk(unittest.TestCase):
 		# in ruamel we register classes to use yaml_tags
 		yaml_this.register_class(StandardYAMLTag)
 		loaded = yaml_this.load(text_has_anchors_tags)
-		cleaned = recursive_clean(loaded)
+		cleaned = yaml_clean(loaded)
 		self.assertEqual(cleaned,
 			{'greeting':'hello mary'})
 
@@ -276,5 +276,5 @@ class YAMLTalk(unittest.TestCase):
 		#   YAMLObjectOrtho in this example because it allows logic in the
 		#   constructor
 		loaded = yaml.load(text_has_anchors_tags,Loader=yaml.Loader)
-		cleaned = recursive_clean(loaded)
+		cleaned = yaml_clean(loaded)
 		self.assertEqual(cleaned,{'greeting':'hello mary'})

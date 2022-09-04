@@ -183,6 +183,7 @@ class TestDispatcher(unittest.TestCase):
 # note that the `signature_dispatch` package covers almost all of ortho.Handler
 #   albeit with an alternate syntax. it covers @dispatcher functionality while
 #   also including the option for priority
+# see also functools.singledispatch and the multipledispatch package
 
 # example functions
 def x1(a): return {'a':a}
@@ -197,7 +198,7 @@ class TestSignatureDispatch(unittest.TestCase):
 		pass_result = {0:['v0','v1','v4'],1: ['v1b','v3','v4'],2:['v4']}
 		try:
 			import signature_dispatch
-			# use globals to demonstrate the
+			# use globals to demonstrate
 			@signature_dispatch
 			def my_func(*,a): return {'a':a}
 			@signature_dispatch
