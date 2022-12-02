@@ -17,7 +17,8 @@ def command_check(command):
 			proc = subprocess.Popen(command,
 				stdout=FNULL,stderr=FNULL,shell=True,executable='/bin/bash')
 			proc.communicate()
-			return proc.returncode==0
+			# return false whenever we cannot find the executable or run it
+			return proc.returncode not in [126,127]
 	except Exception as e: 
 		print('warning','caught exception on command_check: %s'%e)
 		return False
