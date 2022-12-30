@@ -14,4 +14,4 @@ A catchall grab-bag of miscellaneous Python extrana.
 ### Circa `2021.10.04`
 
 - Started porting the `Handler` class into ortho.
-- Development roadmap: refactor the `Handler` for elegant "multiple dispatch by signature" functionality (note that it took a while to come up with the right name for this) and then use it to integrate with YAML to manage docker containers and associated workflows.
+- Development roadmap: refactor the `Handler` for elegant "multiple dispatch by signature" functionality (note that it took a while to come up with the right name for this) and then use it to integrate with YAML to manage docker containers and associated workflows. Note that later this would become the `Dispatcher` however as of `2022.12.24`, I have not yet applied it to any projects.

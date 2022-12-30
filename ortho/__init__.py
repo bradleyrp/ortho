@@ -12,16 +12,19 @@ __all__ = [
 	'Struct','get_cpu_cores','clipboard',
 	'bash','command_check',
 	'bash',
-	'meta_hasher','dispatcher','Dispatcher','Handler','introspect_function',
+	'meta_hasher','Handler','introspect_function',
+	'dispatcher','DispatcherBase','Dispatcher',
 	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
 	'YAMLDocumentBuilder',
 	'yaml_clean','yaml_clean_class',
+	'yaml_str',
 	'treeview',
 	# we include yaml_include items manually 
 	#   for now e.g. ortho.yaml_include.YAML
 	'code_current','get_git_hash',
 	'compose',
 	'linetime',
+	'text_viewer',
 	# definitions
 	'str_types',]
 
@@ -51,6 +54,7 @@ from .bash import bash
 from .bash import command_check
 from .metadata import meta_hasher
 from .dispatch import dispatcher
+from .dispatch import DispatcherBase
 from .dispatch import Dispatcher
 from .dispatch import Handler
 from .dispatch import introspect_function
@@ -60,10 +64,12 @@ from .yaml import YAMLIncludeBaseSafe
 from .yaml_builder import YAMLDocumentBuilder
 from .yaml import yaml_clean
 from .yaml import yaml_clean_class
+from .yaml import yaml_str
 from .git import code_current
 from .git import get_git_hash
 from .functional import compose
 from .terminal_view import treeview
+from .text_viewer import text_viewer
 
 # definitions
 from .logs import str_types

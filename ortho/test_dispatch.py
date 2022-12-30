@@ -9,6 +9,7 @@ from .dispatch import introspect_function
 from .dispatch import function_accepts_args
 from .dispatch import Handler
 from .dispatch import Dispatcher
+from .dispatch import DispatcherBase
 
 # TEST: demonstrate the use of legacy Handler
 
@@ -117,16 +118,16 @@ class TestFuncTools(unittest.TestCase):
 		except: pass
 		self.assertEqual(test_decorator(func_reporter_functools),{})
 
-# TEST: use the Dispatcher, an updated version of Handler
+# TEST: use the DispatcherBase, an updated version of Handler
 
-class ActionD(Dispatcher):
+class ActionD(DispatcherBase):
 	def v1(self,a): return 'v1',(a,),{}
 	def v2(self,a,b,c=None): return 'v2',(a,b),{'c':c}
 	# following two are redundant and cause an expected error
 	def v3(self,a,b,c,d): return 'v3',(a,b,c,d,),{}
 	def v4(self,a,b,c,d,e=None): return 'v4',(a,b,c,d),{'e':e}
 
-class TestDispatcherClass(unittest.TestCase):
+class TestDispatcherClassBase(unittest.TestCase):
 	"""
 	Test the Dispatcher class.
 	This class has the same API as Handler, with simpler code.
@@ -209,3 +210,37 @@ class TestSignatureDispatch(unittest.TestCase):
 			def my_func(*,a): return {'a_high_prio':a}
 			self.assertEqual(my_func(a=1),{'a_high_prio':1})
 		except ModuleNotFoundError: pass
+
+# TEST: use the Dispatcher,
+# the Dispatcher is a simple class decorator for multiple dispatch by signature
+
+@Dispatcher
+class Action:
+	def v1(self,a): return 'v1',(a,),{}
+	def v2(self,a,b,c=None): return 'v2',(a,b),{'c':c}
+	# following two are redundant and cause an expected error
+	def v3(self,a,b,c,d): return 'v3',(a,b,c,d,),{}
+	def v4(self,a,b,c,d,e=None): return 'v4',(a,b,c,d),{'e':e}
+
+class TestDispatcherClass(unittest.TestCase):
+	"""
+	Test the Dispatcher class.
+	This class has the same API as Handler, with simpler code.
+	This test is nearly identical to TestHandler.
+	"""
+	# nb the tests below are verbatim identical to the DispatcherBase tests
+	#   however we omit the solve property required there to return the object
+	#   and thereby demonstrate that the Dispatcher class decorator is the
+	#   most elegant way to handle multiple dispatch by signature
+	def test_handler_legacy(self):
+		self.assertEqual(Action(a=1),('v1',(1,),{}))
+		self.assertEqual(Action(a=1,b=2),('v2',(1,2,),{'c':None}))
+		self.assertEqual(Action(a=1,b=2,c=3),('v2',(1,2,),{'c':3}))
+		self.assertEqual(Action(1,2),('v2',(1,2,),{'c':None}))
+	def test_handler_legacy_arguments(self):
+		with self.assertRaisesRegex(Exception,
+			'does not have any functions capable of accepting the arguments'):
+			ActionD(1,2,3)
+		with self.assertRaisesRegex(Exception,
+			'redundant matches'):
+			ActionD(1,2,3,4)

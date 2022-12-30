@@ -3,6 +3,7 @@
 
 import yaml
 import re
+import io
 from .utils import catalog
 
 ### FEATURE: use the constructor in yaml_tag classes with pyyaml
@@ -179,6 +180,18 @@ def collect_anchors(data):
 			val.anchor.value):
 			index[val.anchor.value] = val
 	return index
+
+def yaml_str(*,yaml,obj):
+	"""
+	Wrapper for ruamel.yaml to make a string.
+	"""
+	# via: https://stackoverflow.com/a/63179923
+	options = {}
+	string_stream = io.StringIO()
+	yaml.dump(obj, string_stream, **options)
+	output_str = string_stream.getvalue()
+	string_stream.close()
+	return output_str
 
 # begin DEPRECATED code: working on include-like functionality which was
 #   ultimately superceded by ortho.yaml_include

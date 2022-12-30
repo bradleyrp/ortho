@@ -71,6 +71,7 @@ def treeview(data,style='unicode'):
 	"""
 	Print a tree in one of several styles.
 	"""
+	# note that dumping to YAML is a great alternative
 	if style=='unicode': 
 		# protect against TeeMultiplexer here because it cannot print unicode to the log file
 		do_swap_stdout = sys.stdout.__class__.__name__=='TeeMultiplexer'

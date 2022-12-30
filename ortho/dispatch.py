@@ -336,7 +336,7 @@ def function_accepts_args_bind(func,*args,**kwargs):
 	"""Check if a function will accept a set of arguments."""
 	raise NotImplementedError('use bind to check and compare times')
 
-class Dispatcher:
+class DispatcherBase:
 	# dev: why is Dispatcher a parent class and not a decorator? a decorator
 	#   might provide more definition-time options for checking things
 	def __init__(self,*args,**kwargs):
@@ -354,14 +354,75 @@ class Dispatcher:
 				matches.append(name)
 		if not matches:
 			raise Exception(('this subclass of Dispatcher (%s) does not have '
-				'any functions capable of accepting the arguments you sent '
-				)%(self.__class__.__name__))
+				'any functions capable of accepting the arguments you sent: '
+				'args=(%s), kwargs=(%s)')%(
+					self.__class__.__name__,str(args),str(kwargs)))
 		elif len(matches)>1:
 			raise NotImplementedError('redundant matches: %s'%str(matches))
 		else: self._target = matches[0]
+
+		"""
+		experimental alternative: is solve necessary?
+			when you subclass the DispatcherBase (formerly Dispatcher), you can
+			define methods with different signatures and then if you create
+			an object with e.g. MyClass(*args,**kwargs) then the
+			DispatcherBase class will find the right method to match the
+			signature. however, to return the object, you need to access the
+			MyClass(*args,**kwargs).solve property. in the following
+			commented code, I try to dynamically change once class into
+			another. note that we cannot delete the methods because they are
+			bound to the class, so the delattr example below is misguided.
+			in general it's way way too hacky to try to dynamically change
+			one class to another. eliminating the need for using the solve
+			property to return the target object after signature dispatch is
+			much easier when we create the Dispatcher decorator below
+		"""
+		# experimental alternative: dynamically change the class
+		# self.me = getattr(self,self._target)(*self._args,**self._kwargs)
+		# do not try to delattr the methods from an object, this is impossible
+		# this does not work: 
+		#   for key in self._methods.keys(): delattr(self,key)
+		# here we dyanmically copy one instance into another
+		# for key in vars(me):
+		#     if not key.startswith('_'):
+		#         setattr(self,key,getattr(me,key))
+		# here we play a trick and rename the class
+		# self.__class__ = me.__class__
+		# note: do not use the above strategy because it is obviously hacky!
+
 	@property
 	def solve(self):
 		return getattr(self,self._target)(*self._args,**self._kwargs)
+
+class Dispatcher:
+	def __init__(self,target_cls):
+		# the container class has no constructor and only supplies methods
+		self.container = target_cls()
+	def __call__(self,*args,**kwargs):
+		# the following sequence is nearly verbatim from Dispatcher.__init__
+		# store the incoming arguments
+		self._args = args
+		self._kwargs = kwargs
+		# collect methods
+		self._methods = dict([(i,j) for i,j in 
+			inspect.getmembers(self.container,predicate=inspect.ismethod)
+			if not i.startswith('_')])
+		# identify a match
+		matches = []
+		for name,func in self._methods.items():
+			if function_accepts_args(func,*self._args,**self._kwargs):
+				matches.append(name)
+		if not matches:
+			raise Exception(('this subclass of Dispatcher (%s) does not have '
+				'any functions capable of accepting the arguments you sent: '
+				'args=(%s), kwargs=(%s)')%(
+					self.__class__.__name__,str(args),str(kwargs)))
+		elif len(matches)>1:
+			raise NotImplementedError('redundant matches: %s'%str(matches))
+		else: self._target = matches[0]
+		method_builder = getattr(self.container,self._target)
+		result = method_builder(*args,**kwargs)
+		return result
 
 def check_local_frame(name,stack_depth=1):
 	"""
@@ -388,7 +449,7 @@ def check_local_frame(name,stack_depth=1):
 class DispatcherFunction:
 	def __init__(self,):
 		"""
-		A functoin attribute which disambiguates multiple functions serving as
+		A function attribute which disambiguates multiple functions serving as
 		endpoints for multiple dispatch by signature.
 		"""
 		self.candidates = []
