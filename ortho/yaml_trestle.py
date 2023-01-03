@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+"""
+TRESTLE
+
+Trestle is a pattern for building a mediated YAML file interaface in which a
+user can add items to a YAML file which is read, modified, then rewritten in a
+completed form. This automatically applies a template for different kinds of 
+data and tends to streamline complicated user data entry interfaces.
+"""
+
 import os
 import ruamel
 import typing
