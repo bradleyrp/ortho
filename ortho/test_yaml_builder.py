@@ -9,7 +9,7 @@ import io
 import unittest
 
 import ortho
-from ortho import Handler, YAMLDocumentBuilder
+from ortho import Handler, TrestleDocument
 
 import ruamel
 from ruamel.yaml import YAML,yaml_object
@@ -82,7 +82,7 @@ class MyBuilder(Handler):
 # the handler requires us to use the solve property to return an object
 builder_solved = lambda *args,**kwargs: MyBuilder(*args,**kwargs).solve
 
-class MyDocument(YAMLDocumentBuilder): 
+class MyDocument(TrestleDocument): 
 	yaml_tag = '!mydoc'
 	# build objects from multiple dispatch on kwargs keys
 	builder = builder_solved
@@ -102,7 +102,7 @@ class Meal:
 class OrthoYAMLOverrides(unittest.TestCase):
 	def test_yaml_document_builder(self):
 		"""
-		Test the YAMLDocumentBuilder.
+		Test the TrestleDocument.
 		"""
 		yaml = YAML(typ='rt')
 		yaml.width = 80

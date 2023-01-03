@@ -1,33 +1,6 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
-__all__ = [
-	'version',
-	'interact',
-	'ortho_print','printer',
-	'debugger','debugger_click',
-	'statefile','SimpleFlock',
-	'identity','redirect','decorate_redirect','scripter',
-	'catalog','delve','delvetry','delveset','script_packer',
-	'Struct','get_cpu_cores','clipboard',
-	'bash','command_check',
-	'bash',
-	'meta_hasher','Handler','introspect_function',
-	'dispatcher','DispatcherBase','Dispatcher',
-	'YAMLObject','YAMLIncludeBase','YAMLIncludeSafeBase',
-	'YAMLDocumentBuilder',
-	'yaml_clean','yaml_clean_class',
-	'yaml_str',
-	'treeview',
-	# we include yaml_include items manually 
-	#   for now e.g. ortho.yaml_include.YAML
-	'code_current','get_git_hash',
-	'compose',
-	'linetime',
-	'text_viewer',
-	# definitions
-	'str_types',]
-
 from ._version import version
 from .reexec import interact as interact
 from .logs import stylized_print as ortho_print
@@ -61,7 +34,9 @@ from .dispatch import introspect_function
 from .yaml import YAMLObject
 from .yaml import YAMLIncludeBase
 from .yaml import YAMLIncludeBaseSafe
-from .yaml_builder import YAMLDocumentBuilder
+from .yaml_trestle import TrestleDocument
+from .yaml_trestle import BaseTrestle
+from .yaml_trestle import build_trestle
 from .yaml import yaml_clean
 from .yaml import yaml_clean_class
 from .yaml import yaml_str
@@ -70,6 +45,5 @@ from .git import get_git_hash
 from .functional import compose
 from .terminal_view import treeview
 from .text_viewer import text_viewer
-
-# definitions
+# dev: this could be replaced with six.string_types
 from .logs import str_types

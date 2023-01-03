@@ -6,7 +6,7 @@ Orthopraxy runpy tools.
 
 Usage examples: 
 
-python -m ortho interact -i <script_dev.py>
+python -m ortho interact -d -i <script_dev.py>
 """
 
 import os
@@ -45,7 +45,7 @@ def subcommander_argparse(cli_index):
 		# pass the namespace sans subparser name to the function
 		cli_index[name]['func'](**args.__dict__)
 
-#!...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+### section (missing records, previously the section included an alert)
 
 import sys
 import inspect
@@ -134,7 +134,7 @@ def docker_router(*args,**kwargs):
 	print(123)
 	this = Everything(a=1,b=2).call
 
-#!...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+### section
 
 # exposed functions for the ooo utility
 cli_index_ooo = {
