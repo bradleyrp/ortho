@@ -416,7 +416,7 @@ class Dispatcher:
 			raise Exception(('this subclass of Dispatcher (%s) does not have '
 				'any functions capable of accepting the arguments you sent: '
 				'args=(%s), kwargs=(%s)')%(
-					self.__class__.__name__,str(args),str(kwargs)))
+					self.container.__class__.__name__,str(args),str(kwargs)))
 		elif len(matches)>1:
 			raise NotImplementedError('redundant matches: %s'%str(matches))
 		else: self._target = matches[0]
