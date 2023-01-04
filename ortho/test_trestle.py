@@ -23,7 +23,12 @@ Note that I built this script very easily in another interactive script via:
 	python -m ortho interact -i test-trestles.py
 
 That test is omitted in favor of a proper test below. The interact feature is
-useful for development.
+useful for development. Later I folded this test into the current file, and 
+now you can use:
+	
+	python -i -m ortho.test_trestle
+
+We need more tests, but this demonstrates the pattern.	
 """
 
 import io
@@ -99,7 +104,7 @@ class HandlerA(ScannerYAML):
 			out['c'] = self.c
 		return out
 
-class HandlerB:
+class HandlerB(ScannerYAML):
 	yaml_tag = '!kind_b'
 	def __init__(self,*,e,f,g=None):
 		self.e = e
@@ -108,9 +113,9 @@ class HandlerB:
 		print('status: we are in the HandlerB constructor')
 	@property
 	def clean(self):
-		out = dict(a=self.a,b=self.b)
-		if self.c:
-			out['c'] = self.c
+		out = dict(e=self.e,f=self.f)
+		if self.g:
+			out['g'] = self.g
 		return out
 
 # STEP 4: Attach to YAML

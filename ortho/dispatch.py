@@ -322,7 +322,16 @@ def signature_match(sig,*args,**kwargs):
 			except:
 				import pdb;pdb.set_trace()
 	# check for extraneous kwargs
-	if set(kwargs_popper.keys())>set(sig['kwargs']):
+	# critical bugfix here: previously we checked to see if the left was 
+	#   greater than the right in:
+	#     set(kwargs_popper.keys()) > set(sig['kwargs'])
+	#   however if they are disjoint, this is false. what we really want is to
+	#   see if any of the signature kwargs are not contained in the kwargs
+	#   we received in this challenge. we could probably use this condition:
+	#     not set(kwargs_popper.keys()) <= set(sig['kwargs'].keys())
+	#   but it makes more intuitive sense to subtract and see if anything 
+	#   remains outside
+	if any(set(kwargs_popper.keys()) - set(sig['kwargs'].keys())):
 		fail = True
 	return not fail
 
@@ -418,7 +427,8 @@ class Dispatcher:
 				'args=(%s), kwargs=(%s)')%(
 					self.container.__class__.__name__,str(args),str(kwargs)))
 		elif len(matches)>1:
-			raise NotImplementedError('redundant matches: %s'%str(matches))
+			raise NotImplementedError('redundant matches in Dispatcher class '
+				f'({self.container.__class__.__name__}): %s'%str(matches))
 		else: self._target = matches[0]
 		method_builder = getattr(self.container,self._target)
 		result = method_builder(*args,**kwargs)
