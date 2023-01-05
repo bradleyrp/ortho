@@ -133,14 +133,16 @@ class BaseTrestle:
 		cleaned = node.clean
 		try:
 			if node.clean == None:
-				# use a null string as a placeholder for null
+				# use a null string as a placeholder for null, however this
+				#   must also have a tag or else it would be incomprehensible
 				return representer.represent_scalar(cls.yaml_tag,'')
-			elif isinstance(node.clean,dict):
+			elif isinstance(cleaned,dict):
 				return representer.represent_mapping(cls.yaml_tag,cleaned)
-			# dev: include strings or sequences?
+			elif isinstance(cleaned,str):
+				return representer.represent_scalar(cls.yaml_tag,cleaned)
 			else:
-				raise NotImplementedError(
-					f'base class ScannerYAML cannot return {cleaned}')
+				raise NotImplementedError('base class from tag '
+					f'{cls.yaml_tag} cannot return {cleaned}')
 		except:
 			print(f'failed to write clean data {node.__dict__} with '
 				f'tag {cls.yaml_tag}')
@@ -148,12 +150,20 @@ class BaseTrestle:
 
 	@classmethod
 	def from_yaml(cls,constructor,node):
+		# mapping nodes are constructed deep
 		if isinstance(node,ruamel.yaml.nodes.MappingNode):
 			data = ruamel.yaml.constructor.SafeConstructor.construct_mapping(
 				constructor,node,deep=True)
+			return cls(**data)
+		# null values from tagged objects appear as null strings
 		elif isinstance(node,ruamel.yaml.nodes.ScalarNode) and node.value=='':
-			# null values from tagged objects appear as null strings
 			return cls()
+		# if we are aleady a class instance, we pass through
+		elif isinstance(node,cls):
+			return node
+		# we mark strings and other scalars when they are ingested so that we 
+		#   can send everything to a Dispatcher
+		elif isinstance(node,(str,float,int)):
+			return cls(scalar=node)
 		else:
 			raise TypeError(f'unprepared to interpret type for {node}')
-		return cls(**data)

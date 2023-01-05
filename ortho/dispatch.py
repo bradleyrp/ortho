@@ -479,7 +479,12 @@ class DispatcherFunction:
 		for snum,sig in enumerate(self.sigs):
 			if signature_match(sig,*args,**kwargs):
 				return self.candidates[snum](*args,**kwargs)
-		raise TypeError('function has no match')
+		# dev: this might be uninformative if you use it in a class, but I 
+		#   cannot figure out how to get the class name, so in YAML load you 
+		#   would have to do some tricky guesswork
+		raise TypeError(
+			f'function for has no match for args={args}, kwargs={kwargs}. '
+			'recall that you cannot use @dispatcher on class methods')
 
 def dispatcher(func):
 	"""Decorator for multiple dispatch by signature."""
