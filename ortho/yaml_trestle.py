@@ -154,7 +154,15 @@ class BaseTrestle:
 		if isinstance(node,ruamel.yaml.nodes.MappingNode):
 			data = ruamel.yaml.constructor.SafeConstructor.construct_mapping(
 				constructor,node,deep=True)
-			return cls(**data)
+			try: 
+				out = cls(**data)
+			except TypeError as e:
+				if 'unexpected' in str(e):
+					raise Exception(
+						f'exception when building class from yaml: '
+						f'{cls}: {e}')
+				raise
+			return out
 		# null values from tagged objects appear as null strings
 		elif isinstance(node,ruamel.yaml.nodes.ScalarNode) and node.value=='':
 			return cls()
