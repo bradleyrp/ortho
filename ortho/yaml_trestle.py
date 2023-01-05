@@ -106,6 +106,9 @@ def build_trestle(*,tags,yaml,get_text_completer=False):
 			with open(path,'w') as fp:
 			 	fp.write(text_cache)
 			raise
+		# we mark completion and save the path for any later writes
+		data._created = True
+		data._path = path
 		return data
 
 	def yaml_completer_text(text):
@@ -140,6 +143,8 @@ class BaseTrestle:
 				return representer.represent_mapping(cls.yaml_tag,cleaned)
 			elif isinstance(cleaned,str):
 				return representer.represent_scalar(cls.yaml_tag,cleaned)
+			elif isinstance(cleaned,typing.List):
+				return representer.represent_sequence(cls.yaml_tag,cleaned)
 			else:
 				raise NotImplementedError('base class from tag '
 					f'{cls.yaml_tag} cannot return {cleaned}')
@@ -173,5 +178,10 @@ class BaseTrestle:
 		#   can send everything to a Dispatcher
 		elif isinstance(node,(str,float,int)):
 			return cls(scalar=node)
+		# sequence can come along too
+		elif isinstance(node,typing.List):
+			return cls(*node)
+		elif isinstance(node,ruamel.yaml.nodes.SequenceNode):
+			return cls(*node.value)
 		else:
 			raise TypeError(f'unprepared to interpret type for {node}')
