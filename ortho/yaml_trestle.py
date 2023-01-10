@@ -10,6 +10,10 @@ completed form. This automatically applies a template for different kinds of
 data and tends to streamline complicated user data entry interfaces.
 """
 
+# note from the author to the author: do not, under any circumstances, unpack
+#   any YAML objects yourself. do not touch the value attribute. keep the YAML
+#   serializer totally separate. ignore this at your own peril!
+
 import os
 import ruamel
 import typing
@@ -65,7 +69,7 @@ class TrestleDocument:
 		outgoing = node.clean
 		if isinstance(outgoing,dict):
 			return representer.represent_mapping(cls.yaml_tag,outgoing)
-		elif isinstance(outgoing,typing.List):
+		elif isinstance(outgoing,typing.Sequence):
 			return representer.represent_sequence(cls.yaml_tag,outgoing)
 		else:
 			raise ValueError(f'invalid data type: {type(outgoing)}')
@@ -102,12 +106,12 @@ def build_trestle(*,tags,yaml,get_text_completer=False):
 			with open(path,'w') as fp:
 			 	yaml.dump(data,fp)
 		# rewrite the cached text if we cannot dump it to the file
-		except:
+		except Exception as e:
+			print('warning: writing original data, exception incoming')
 			with open(path,'w') as fp:
 			 	fp.write(text_cache)
 			raise
-		# we mark completion and save the path for any later writes
-		data._created = True
+		# we mark that the document is validated by attaching its path
 		data._path = path
 		return data
 
@@ -135,7 +139,7 @@ class BaseTrestle:
 		# the clean property prepares the data for export to yaml
 		cleaned = node.clean
 		try:
-			if node.clean == None:
+			if cleaned == None:
 				# use a null string as a placeholder for null, however this
 				#   must also have a tag or else it would be incomprehensible
 				return representer.represent_scalar(cls.yaml_tag,'')
@@ -143,7 +147,7 @@ class BaseTrestle:
 				return representer.represent_mapping(cls.yaml_tag,cleaned)
 			elif isinstance(cleaned,str):
 				return representer.represent_scalar(cls.yaml_tag,cleaned)
-			elif isinstance(cleaned,typing.List):
+			elif isinstance(cleaned,typing.Sequence):
 				return representer.represent_sequence(cls.yaml_tag,cleaned)
 			else:
 				raise NotImplementedError('base class from tag '
@@ -176,12 +180,53 @@ class BaseTrestle:
 			return node
 		# we mark strings and other scalars when they are ingested so that we 
 		#   can send everything to a Dispatcher
-		elif isinstance(node,(str,float,int)):
-			return cls(scalar=node)
+		elif isinstance(node,str):
+			return cls(str=node)
+		elif isinstance(node,float):
+			return cls(float=node)
+		elif isinstance(node,int):
+			return cls(int=node)
 		# sequence can come along too
-		elif isinstance(node,typing.List):
+		elif isinstance(node,typing.Sequence):
 			return cls(*node)
 		elif isinstance(node,ruamel.yaml.nodes.SequenceNode):
-			return cls(*node.value)
+			# nb this was the site of a tricky error in which we forgot to use
+			#   a constructor, and touched the third rail of YAML, the value
+			#   attribute. this motivated the warning a the top of the document
+			args = constructor.construct_sequence(node)
+			return cls(*args)
 		else:
 			raise TypeError(f'unprepared to interpret type for {node}')
+
+def trestle_nesting_typer(cls,obj):
+	"""
+	Helper to convert incoming types to the right class.
+	This is necessary for classes that hold other YAML objects as attributes and
+	therefore is required for nesting these structures in the YAML document. It
+	should be used in the class constructors
+	"""
+	# if the object is already an instance of the class, it passes through
+	if isinstance(obj,cls):
+		return obj
+	# null values also pass through
+	elif obj == None:
+		return None
+	# if we receive a string, we use a send a "value" keyword to the constructor
+	elif isinstance(obj,str):
+		return cls(value=obj)
+	# the dict is mapped to kwargs
+	elif isinstance(obj,dict):
+		return cls(**obj)
+	# a list is sent to args
+	elif isinstance(obj,typing.Sequence):
+		return cls(*obj)
+	# should we ever need to handle SequenceNode or Mapping node here
+	elif isinstance(obj,ruamel.yaml.nodes.SequenceNode):
+		args = ruamel.yaml.constructor.SafeConstructor.construct_sequence(obj)
+		return cls(*args)
+	elif isinstance(obj,ruamel.yaml.nodes.MappingNode):
+		kwargs = ruamel.yaml.constructor.SafeConstructor.construct_mapping(obj)
+		return cls(**kwargs)
+	else:
+		raise TypeError(
+			f'cannot convert incoming object "{obj}" to class "{cls}"')

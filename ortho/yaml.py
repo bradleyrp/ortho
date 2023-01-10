@@ -93,7 +93,8 @@ def yaml_clean(item):
 		for k,v in item.items():
 			up[k] = yaml_clean(v)
 	else:
-		up = item.clean if hasattr(item,'clean') else item
+		clean = getattr(item,'clean',None)
+		up = item.clean if clean else item
 	return up
 
 def yaml_clean_class(func):

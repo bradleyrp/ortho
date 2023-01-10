@@ -37,6 +37,7 @@ from .yaml import YAMLIncludeBaseSafe
 from .yaml_trestle import TrestleDocument
 from .yaml_trestle import BaseTrestle
 from .yaml_trestle import build_trestle
+from .yaml_trestle import trestle_nesting_typer
 from .yaml import yaml_clean
 from .yaml import yaml_clean_class
 from .yaml import yaml_str

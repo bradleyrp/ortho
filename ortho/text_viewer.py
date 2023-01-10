@@ -17,6 +17,10 @@ def text_viewer(text,use_more=False):
 	else:
 		# we make an easy exit shortcut 'q' key
 		# dev: make a vimrc flag to accept a custom configuration
-		cmd = ['vim','-','+map q :q!<CR>','+set scrolloff=5','--not-a-term']
+		cmd = ['vim','-',
+			'+map q :q!<CR>',
+			'+set scrolloff=5',
+			'+noswapfile',
+			'--not-a-term']
 	proc = subprocess.Popen(cmd,stdin=proc_echo.stdout)
 	proc.communicate()
