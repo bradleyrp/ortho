@@ -34,8 +34,8 @@ from .dispatch import introspect_function
 from .yaml import YAMLObject
 from .yaml import YAMLIncludeBase
 from .yaml import YAMLIncludeBaseSafe
+from .yaml_trestle import Trestle
 from .yaml_trestle import TrestleDocument
-from .yaml_trestle import BaseTrestle
 from .yaml_trestle import build_trestle
 from .yaml_trestle import trestle_nesting_typer
 from .yaml import yaml_clean

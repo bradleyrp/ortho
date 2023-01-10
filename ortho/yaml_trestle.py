@@ -19,7 +19,7 @@ import ruamel
 import typing
 from .yaml import yaml_str
 
-class TrestleDocument:
+class TrestleDocumentXXX:
 	yaml_tag = '!doc'
 	def __init__(self,*,data):
 		self.data = data
@@ -129,10 +129,15 @@ def build_trestle(*,tags,yaml,get_text_completer=False):
 	else:
 		return yaml_completer
 
-class BaseTrestle:
+class Trestle:
 	"""
 	Base class for round-trip YAML tagging and modification.
 	"""
+	# note that this class is very, very similar to TrestleDocument. the crucial
+	#   difference is that we are subclassing this class to build arbitrary 
+	#   nested objects which might be tagged. The TrestleDocument above is 
+	#   instead also using a builder to construct certain types of root level
+	#   objects where appropriate
 
 	@classmethod
 	def to_yaml(cls,representer,node):
@@ -172,6 +177,13 @@ class BaseTrestle:
 						f'{cls}: {e}')
 				raise
 			return out
+		elif isinstance(node,ruamel.yaml.nodes.SequenceNode):
+			# nb this was the site of a tricky error in which we forgot to use
+			#   a constructor, and touched the third rail of YAML, the value
+			#   attribute. this motivated the warning a the top of the document
+			args = ruamel.yaml.constructor.SafeConstructor.construct_sequence(
+				constructor,node,deep=True)
+			return cls(*args)
 		# null values from tagged objects appear as null strings
 		elif isinstance(node,ruamel.yaml.nodes.ScalarNode) and node.value=='':
 			return cls()
@@ -189,14 +201,52 @@ class BaseTrestle:
 		# sequence can come along too
 		elif isinstance(node,typing.Sequence):
 			return cls(*node)
-		elif isinstance(node,ruamel.yaml.nodes.SequenceNode):
-			# nb this was the site of a tricky error in which we forgot to use
-			#   a constructor, and touched the third rail of YAML, the value
-			#   attribute. this motivated the warning a the top of the document
-			args = constructor.construct_sequence(node)
-			return cls(*args)
 		else:
 			raise TypeError(f'unprepared to interpret type for {node}')
+
+class TrestleDocument(Trestle):
+	yaml_tag = None
+	trestle_dispatcher = None
+	trestle_kind = list
+	trestle_name = 'data'
+	def __init__(self,*args,**kwargs):
+		"""
+		Subclass this to tag a YAML document and send each object in the mapping
+		or sequence to a Dispatcher for construction. This is built on the
+		Trestle class, which serializes the YAML.
+		"""
+		if self.yaml_tag == None:
+			raise Exception('this TrestleDocument requires a yaml_tag')
+		if self.trestle_dispatcher == None:
+			raise Exception('define a trestle_dispatcher class attribute that '
+				'points to a Dispatcher which receives and builds the objects '
+				f'for this document (kind: {self.trestle_kind})')
+		if self.trestle_kind == list:
+			data = []
+			if kwargs:
+				raise Exception(f'trestle document list got kwargs: {kwargs}')
+			for child in args:
+				# pass through tagged objects
+				tag = getattr(child,'yaml_tag',None)
+				item = self.trestle_dispatcher(**child) if not tag else child
+				data.append(item)
+		elif self.trestle_kind == dict:
+			# dev: the following needs a test
+			if args:
+				raise Exception(f'trestle document dict got args: {kwargs}')
+			data = {}
+			for key,child in kwargs:
+				# pass through tagged objects
+				tag = getattr(child,'yaml_tag',None)
+				item = self.trestle_dispatcher(**child) if not tag else child
+				data[key] = item
+		else:
+			raise ValueError(f'invalid trestle_kind: {self.trestle_kind}')
+		setattr(self,self.trestle_name,data)
+
+	@property
+	def clean(self):
+		return getattr(self,self.trestle_name)
 
 def trestle_nesting_typer(cls,obj):
 	"""
