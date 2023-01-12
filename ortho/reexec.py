@@ -371,6 +371,21 @@ def debugger():
 	msg = "(auto debug in place)"
 	code.interact(local=ns,banner=msg)
 
+def interact_local(ns=None,msg=None):
+	"""
+	Start an interactive session in a function.
+	Be sure to pass along the namespace.
+	"""
+	if not ns:
+		raise Exception('please send locals to the "ns" (namespace) '
+			'argument of interact_local')
+	# include tab completion here
+	readline.set_completer(rlcompleter.Completer(ns).complete)
+	readline.parse_and_bind("tab: complete")
+	# let the user know they are debugging
+	msg = "(interact)" if msg == None else msg
+	code.interact(local=ns,banner=msg)
+
 def debugger_click(func,with_ctx=False):
 	"""
 	Decorator which sends the user to an interactive session whenever an 

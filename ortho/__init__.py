@@ -3,6 +3,7 @@
 
 from ._version import version
 from .reexec import interact as interact
+from .reexec import interact_local as interact_local
 from .logs import stylized_print as ortho_print
 from .logs import printer as printer
 from .reexec import debugger as debugger
@@ -46,5 +47,7 @@ from .git import get_git_hash
 from .functional import compose
 from .terminal_view import treeview
 from .text_viewer import text_viewer
-# dev: this could be replaced with six.string_types
+# str_types could be replaced with six.string_types but Python 2 compatibility
+#   may be redundant at this point
 from .logs import str_types
+from .dotdict import DotDict
