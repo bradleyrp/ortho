@@ -318,9 +318,7 @@ def signature_match(sig,*args,**kwargs):
 			break
 		else:
 			# pop kwargs that correspond to args names
-			try: kwargs_popper.pop(arg)
-			except:
-				import pdb;pdb.set_trace()
+			kwargs_popper.pop(arg)
 	# check for extraneous kwargs
 	# critical bugfix here: previously we checked to see if the left was 
 	#   greater than the right in:
@@ -335,8 +333,43 @@ def signature_match(sig,*args,**kwargs):
 		fail = True
 	return not fail
 
+def signature_match_fuzz(sig,*args,**kwargs):
+	"""
+	Compute a score for how well the function matches the args and kwargs.
+	A score of -1 indicates arguments do not match, otherwise we score the
+	number of matching kwargs. 
+	"""
+	# the following is similar to signature_match
+	# collect a double star argument and pop this from args because we include
+	#   this in args by convention
+	if '**' in sig:
+		sig['args'].remove(sig['**'])
+	n_args = len(args)
+	# we have to pop from kwargs to see if there are extrana but if not
+	#   then we need a full copy for testing the function call
+	kwargs_popper = dict(kwargs)
+	if n_args <= len(sig['args']):
+		args_named = dict(zip(sig['args'],args))
+		kwargs_popper.update(**args_named)
+	# exit early if we have more args than the signature
+	else: return -1
+	# step through signature arguments and search
+	for anum,arg in enumerate(sig['args']):
+		if anum >= n_args and arg not in kwargs:
+			return -1
+		else:
+			# pop kwargs that correspond to args names
+			kwargs_popper.pop(arg)
+	# now that we know args match, we can compute the number of unknown kwargs
+	#   that the target function might have. this serves as a score. the more
+	#   unknown kwargs, the less likely this is a good match
+	unknowns = set(kwargs_popper.keys()) - set(sig['kwargs'].keys())
+	return unknowns
+
 def function_accepts_args(func,*args,**kwargs):
 	"""Check if a function will accept a set of arguments."""
+	# dev: removed unused function with "bind" suffix which said:
+	#   use bind to check and compare times
 	# collect the signature
 	sig = introspect_function(func)
 	return signature_match(sig,*args,**kwargs)
@@ -403,6 +436,9 @@ class DispatcherBase:
 	def solve(self):
 		return getattr(self,self._target)(*self._args,**self._kwargs)
 
+# dev: make a dispatcher that handles kwargs and sends a score of the kwargs
+#   that match, to make a fuzzy match
+
 class Dispatcher:
 	def __init__(self,target_cls):
 		# the container class has no constructor and only supplies methods
@@ -430,6 +466,56 @@ class Dispatcher:
 			raise NotImplementedError('redundant matches in Dispatcher class '
 				f'({self.container.__class__.__name__}): %s'%str(matches))
 		else: self._target = matches[0]
+		method_builder = getattr(self.container,self._target)
+		result = method_builder(*args,**kwargs)
+		return result
+
+class DispatcherFuzz:
+	# dev: highly similar to Dispatcher but allows some unspecified kwargs
+	def __init__(self,target_cls):
+		# the container class has no constructor and only supplies methods
+		self.container = target_cls()
+	def __call__(self,*args,**kwargs):
+		# the following sequence is nearly verbatim from Dispatcher.__init__
+		# store the incoming arguments
+		self._args = args
+		self._kwargs = kwargs
+		# collect methods
+		self._methods = dict([(i,j) for i,j in 
+			inspect.getmembers(self.container,predicate=inspect.ismethod)
+			if not i.startswith('_')])
+		unknowns = {}
+		for name,func in self._methods.items():
+			sig = introspect_function(func)
+			unknown_kwargs = signature_match_fuzz(sig,*self._args,**self._kwargs)
+			if unknown_kwargs == -1: 
+				continue
+			else:
+				unknowns[name] = unknown_kwargs
+		# for a fuzzy selection, we supply the match with the lowest number
+		#   of unknowns
+		if len(unknowns)==0:
+			raise Exception(('this subclass of Dispatcher (%s) does not have '
+				'any functions capable of accepting the arguments you sent: '
+				'args=(%s), kwargs=(%s)')%(
+					self.container.__class__.__name__,str(args),str(kwargs)))
+		else:
+			min_val = min([len(i) for i in unknowns.values()])
+			min_where = [ii for ii,i in unknowns.items() if len(i)==min_val]
+			if len(min_where) == 0:
+				raise AssertionError
+			elif len(min_where) == 1:
+				self._target = min_where[0]
+			else:
+				raise Exception(('this fuzzy subclass of Dispatcher (%s) does '
+					'not have any functions capable of accepting the arguments '
+					'you sent: args=(%s), kwargs=(%s) because we have '
+					'redundant functions with equal numbers of unknown '
+					'kwargs: %s ')%(
+						self.container.__class__.__name__,
+						str(args),str(kwargs),
+						str(unknowns)))
+
 		method_builder = getattr(self.container,self._target)
 		result = method_builder(*args,**kwargs)
 		return result

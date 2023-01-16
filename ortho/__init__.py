@@ -30,6 +30,7 @@ from .metadata import meta_hasher
 from .dispatch import dispatcher
 from .dispatch import DispatcherBase
 from .dispatch import Dispatcher
+from .dispatch import DispatcherFuzz
 from .dispatch import Handler
 from .dispatch import introspect_function
 from .yaml import YAMLObject
