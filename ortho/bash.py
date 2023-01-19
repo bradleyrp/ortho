@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+from .dotdict import DotDict
+
 import os,sys,subprocess,io,time,re
 import threading
 import tempfile
@@ -214,7 +216,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 			# protect against type issues
 			try: stdout = stdout.decode('utf-8')
 			except: pass
-	return {'stdout':stdout,'stderr':stderr,'code':proc.returncode}
+	return DotDict(**{'stdout':stdout,'stderr':stderr,'code':proc.returncode})
 
 class TeeMultiplexer:
 	"""
