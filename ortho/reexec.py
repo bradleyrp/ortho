@@ -365,9 +365,17 @@ def debugger():
 	ns.update(frame.f_locals)
 	# include tab completion here
 	readline.set_completer(rlcompleter.Completer(ns).complete)
+	# MacOS moved from GNU readline to libedit for license reasons
+	#   however this can be solved with the alternate parse and bind
+	#   below, which is added here for completeness. this needs tested 
+	#   on linux. see helpful comment:
+	#     https://github.com/Homebrew/homebrew-core/pull/\
+	#       118098#issuecomment-1351499727
 	readline.parse_and_bind("tab: complete")
+	readline.parse_and_bind("bind ^I rl_complete")
 	# let the user know they are debugging
 	msg = "(auto debug in place)"
+	import pdb;pdb.set_trace()
 	code.interact(local=ns,banner=msg)
 
 def interact_local(ns=None,msg=None):
