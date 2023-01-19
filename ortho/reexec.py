@@ -353,6 +353,7 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	readline.parse_and_bind("tab: complete")
 	# interact
 	msg = kwargs.get('msg','(interactive mode)')
+	import pdb;pdb.set_trace()
 	code.interact(local=vars,banner=msg)
 
 def debugger():
