@@ -9,9 +9,10 @@ else: import Queue as queue
 
 from ortho.reexec import tracebacker
 
-def command_check(command):
+def command_check(command,verbose=False):
 	"""Run a command and see if it completes with returncode zero."""
-	print('[STATUS] checking command "%s"'%command)
+	if verbose:
+		print('[STATUS] checking command "%s"'%command)
 	try:
 		with open(os.devnull,'w') as FNULL:
 			proc = subprocess.Popen(command,
