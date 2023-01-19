@@ -375,7 +375,6 @@ def debugger():
 	readline.parse_and_bind("bind ^I rl_complete")
 	# let the user know they are debugging
 	msg = "(auto debug in place)"
-	import pdb;pdb.set_trace()
 	code.interact(local=ns,banner=msg)
 
 def interact_local(ns=None,msg=None):
