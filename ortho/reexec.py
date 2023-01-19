@@ -349,7 +349,9 @@ def interact(script='dev.py',hooks=None,**kwargs):
 		'key','val','onward_kwargs']]))
 	vars.update(**vars.pop('out'))
 	readline.set_completer(rlcompleter.Completer(vars).complete)
+	# adding redundant completer for MacOS and linux, see comment elsewhere
 	readline.parse_and_bind("tab: complete")
+	readline.parse_and_bind("bind ^I rl_complete")
 	# interact
 	msg = kwargs.get('msg','(interactive mode)')
 	code.interact(local=vars,banner=msg)
@@ -371,6 +373,8 @@ def debugger():
 	#   on linux. see helpful comment:
 	#     https://github.com/Homebrew/homebrew-core/pull/\
 	#       118098#issuecomment-1351499727
+	# adding redundant completer for MacOS and linux, see comment elsewhere
+	# dev: make the readline stuff more modular
 	readline.parse_and_bind("tab: complete")
 	readline.parse_and_bind("bind ^I rl_complete")
 	# let the user know they are debugging
@@ -387,7 +391,9 @@ def interact_local(ns=None,msg=None):
 			'argument of interact_local')
 	# include tab completion here
 	readline.set_completer(rlcompleter.Completer(ns).complete)
+	# adding redundant completer for MacOS and linux, see comment elsewhere
 	readline.parse_and_bind("tab: complete")
+	readline.parse_and_bind("bind ^I rl_complete")
 	# let the user know they are debugging
 	msg = "(interact)" if msg == None else msg
 	code.interact(local=ns,banner=msg)
