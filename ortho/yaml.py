@@ -56,7 +56,7 @@ class YAMLObjectOverride(yaml.YAMLObject):
 				return cls(*args_out)
 			elif kind == 'mapping':
 				return cls(**args_out)
-			else: raise Excepion
+			else: raise Exception
 		except Exception as e:
 			for error_key in error_keys:
 				if re.match(
@@ -186,10 +186,27 @@ def yaml_str(*,yaml,obj):
 	"""
 	Wrapper for ruamel.yaml to make a string.
 	"""
+	# cannot dump numpy floats by default so you must cast
+	# via: https://stackoverflow.com/a/71205728
+	explain = (
+		'caught an error dumping an object. please check the type and '
+		'add a representer if necessary (e.g. numpy.float64 cannot be '
+		'natively dumped)')
+	error_keys = [
+		r'cannot represent an object']
 	# via: https://stackoverflow.com/a/63179923
 	options = {}
 	string_stream = io.StringIO()
-	yaml.dump(obj, string_stream, **options)
+	try: 
+		yaml.dump(obj, string_stream, **options)
+	except Exception as e:
+		for error_key in error_keys:
+			if re.findall(
+				error_key,
+				str(e)):
+				print('warning: %s'%explain)
+				raise
+			else: raise
 	output_str = string_stream.getvalue()
 	string_stream.close()
 	return output_str
