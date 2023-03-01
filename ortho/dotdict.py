@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+import pickle
+
 class DotDict(dict):
 	"""
 	Use dots to access dictionary items.
@@ -22,3 +24,18 @@ class DotDict(dict):
 	def __dir__(self): 
 		return [i for i in self.keys() if i not in self._protect 
 			and isinstance(i,str_types)]
+
+	# thanks ChatGPT for these two functions (__getstate__ and __setstate__) --Brock
+	def __getstate__(self):
+        # convert the object state to a dictionary
+        state = self.__dict__.copy()
+        state['__class__'] = self.__class__.__name__
+        return state
+
+    def __setstate__(self, state):
+        # restore the object state from a dictionary
+        clsname = state.pop('__class__')
+        if clsname != self.__class__.__name__:
+            raise ValueError("Invalid class name: {}".format(clsname))
+        self.__dict__.update(state)
+
