@@ -216,10 +216,7 @@ def bash(command,log=None,cwd=None,inpipe=None,scroll=True,tag=None,
 			# protect against type issues
 			try: stdout = stdout.decode('utf-8')
 			except: pass
-	returnObject = DotDict(**{'stdout':stdout,'stderr':stderr,'code':proc.returncode})
-	if not returnObject:
-		print('error! returnObject is a NoneType!')
-	return returnObject
+	return DotDict(**{'stdout':stdout,'stderr':stderr,'code':proc.returncode})
 
 class TeeMultiplexer:
 	"""
