@@ -27,15 +27,15 @@ class DotDict(dict):
 
 	# thanks ChatGPT for these two functions (__getstate__ and __setstate__) --Brock
 	def __getstate__(self):
-        # convert the object state to a dictionary
-        state = self.__dict__.copy()
-        state['__class__'] = self.__class__.__name__
-        return state
+		# convert the object state to a dictionary
+		state = self.__dict__.copy()
+		state['__class__'] = self.__class__.__name__
+		return state
 
-    def __setstate__(self, state):
-        # restore the object state from a dictionary
-        clsname = state.pop('__class__')
-        if clsname != self.__class__.__name__:
-            raise ValueError("Invalid class name: {}".format(clsname))
-        self.__dict__.update(state)
+	def __setstate__(self, state):
+		# restore the object state from a dictionary
+		clsname = state.pop('__class__')
+		if clsname != self.__class__.__name__:
+			raise ValueError("Invalid class name: {}".format(clsname))
+		self.__dict__.update(state)
 
