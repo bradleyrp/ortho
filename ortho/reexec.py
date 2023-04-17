@@ -171,7 +171,7 @@ class ReExec:
 		self.get_text()
 		self.get_changes()
 	def do(self):
-		print('status rerunning the script')
+		print('status: rerunning the script')
 		out = self.namespace
 		self.get_text()
 		# canny way to handle exceptions below. all exceptions visit this
