@@ -405,7 +405,7 @@ def interact_local(ns=None,msg=None):
 	msg = "(interact)" if msg == None else msg
 	code.interact(local=ns,banner=msg)
 
-def debugger_click(func,with_ctx=False,verbose=True):
+def debugger_click(func,with_ctx=False):
 	"""
 	Decorator which sends the user to an interactive session whenever an 
 	exception is encountered as long as the click context which is sent as the
@@ -425,8 +425,8 @@ def debugger_click(func,with_ctx=False,verbose=True):
 		# option to use the debugger if we have ortho
 		except:
 			detail = pprint.pformat(dict(args=args,kwargs=kwargs))
-			if verbose:
-				print(f'status: debugging call to {func.__name__}: {detail}')
+			# dev: removed because noisy, but may be useful sometimes:
+			#   print(f'debugging call to {func.__name__}: {detail}')
 			if ctx.obj['DEBUG']:
 				debugger()
 			else: raise
