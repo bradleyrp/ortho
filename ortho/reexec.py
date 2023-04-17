@@ -350,8 +350,15 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	vars.update(**vars.pop('out'))
 	readline.set_completer(rlcompleter.Completer(vars).complete)
 	# adding redundant completer for MacOS and linux, see comment elsewhere
-	readline.parse_and_bind("tab: complete")
-	readline.parse_and_bind("bind ^I rl_complete")
+	if 0:
+		readline.parse_and_bind("tab: complete")
+		readline.parse_and_bind("bind ^I rl_complete")
+
+	if 'libedit' in readline.__doc__:
+		readline.parse_and_bind("bind ^I rl_complete")
+	else:
+		readline.parse_and_bind("tab: complete")
+
 	# interact
 	msg = kwargs.get('msg','(interactive mode)')
 	code.interact(local=vars,banner=msg)
@@ -398,7 +405,7 @@ def interact_local(ns=None,msg=None):
 	msg = "(interact)" if msg == None else msg
 	code.interact(local=ns,banner=msg)
 
-def debugger_click(func,with_ctx=False):
+def debugger_click(func,with_ctx=False,verbose=True):
 	"""
 	Decorator which sends the user to an interactive session whenever an 
 	exception is encountered as long as the click context which is sent as the
@@ -418,7 +425,8 @@ def debugger_click(func,with_ctx=False):
 		# option to use the debugger if we have ortho
 		except:
 			detail = pprint.pformat(dict(args=args,kwargs=kwargs))
-			print(f'debugging call to {func.__name__}: {detail}')
+			if verbose:
+				print(f'status: debugging call to {func.__name__}: {detail}')
 			if ctx.obj['DEBUG']:
 				debugger()
 			else: raise
