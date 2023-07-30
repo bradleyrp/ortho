@@ -91,6 +91,7 @@ def redirect(func_real):
 
 def decorate_redirect(func_real,*args,with_ctx=None):
 	"""Ortho cli decorator which supplies standard features."""
+	#! dev: ryan where is redirect? you say you use it below
 	# set with_ctx if ortho.statefile follows, otherwise set it to false
 	real_name = None
 	# we discard func func_real and run real_func instead so we can separate CLI from utility functions

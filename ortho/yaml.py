@@ -182,9 +182,10 @@ def collect_anchors(data):
 			index[val.anchor.value] = val
 	return index
 
-def yaml_str(*,yaml,obj):
+def yaml_str(*,yaml,obj,**options):
 	"""
 	Wrapper for ruamel.yaml to make a string.
+	Send along a `yaml` instance and `obj`.
 	"""
 	# cannot dump numpy floats by default so you must cast
 	# via: https://stackoverflow.com/a/71205728
@@ -195,7 +196,6 @@ def yaml_str(*,yaml,obj):
 	error_keys = [
 		r'cannot represent an object']
 	# via: https://stackoverflow.com/a/63179923
-	options = {}
 	string_stream = io.StringIO()
 	try: 
 		yaml.dump(obj, string_stream, **options)

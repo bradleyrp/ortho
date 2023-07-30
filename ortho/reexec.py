@@ -288,6 +288,8 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	#   script that could run with regular CLI arguments or with hardcoded
 	#   tests during development
 	out['___is_ortho'] = True
+	# include the file here, so we can use it as a relative path
+	out['__file__'] = script
 	# compatible version of execfile
 	# dev: exec to eval for python <2.7.15. see note above
 	# dev: the following cannot encounter exceptions or we exit. this means that
@@ -405,12 +407,35 @@ def interact_local(ns=None,msg=None):
 	msg = "(interact)" if msg == None else msg
 	code.interact(local=ns,banner=msg)
 
+def rewrite_args_sig(*,func,exception):
+	"""
+	Rewrite function arguments for debugger click.
+	"""
+	from .dispatch import introspect_function
+	details = introspect_function(func)
+	raise NotImplementedError(
+		f'for function named {func.__name__} '
+		'ortho requires that your arguments is named "args" however we see '
+		f'"{details}" instead. a feature to rewrite the signature is '
+		'incomplete or possibly impossible.')
+	# the TypeError message is in the first argument
+	message = exception.args[0]
+	rename = re.match(
+		r'^.+got an unexpected keyword argument \'(.*?)\'',
+		message).group(1)
+	# gather information
+	from inspect import signature
+	sig = signature(func)
+
 def debugger_click(func,with_ctx=False):
 	"""
 	Decorator which sends the user to an interactive session whenever an 
 	exception is encountered as long as the click context which is sent as the
 	first argument includes a DEBUG boolean.
 	"""
+	# dev: if you use decorate_redirect and a custom name for args then this
+	#   fails because it sends the renamed args to kwargs thanks to the 
+	#   definition of the wrapper below
 	def wrapper(ctx,*args,**kwargs):
 		"""
 		Wrap a CLI function with the debugger so that a flag can trigger 
@@ -418,10 +443,26 @@ def debugger_click(func,with_ctx=False):
 		"""
 		# run the function
 		try:
-			if with_ctx: result = func(ctx,*args,**kwargs)
+			if with_ctx: 
+				try: 
+					result = func(ctx,*args,**kwargs)
+				# catch TypeError if we have a mismatching signature
+				except TypeError as e:
+					# dev: deprecated the code below
+					raise
+					func_rewrite = rewrite_args_sig(func=func,exception=e)
+					result = func_rewrite(ctx,*args,**kwargs)
 			# dev: when doing a traceback, indicate that "string" means we are
 			#   executing a script interactively for clarity
-			else: result = func(*args,**kwargs)
+			else: 
+				try:
+					result = func(*args,**kwargs)
+				# catch TypeError if we have a mismatching signature
+				except TypeError as e:
+					# dev: deprecated the code below
+					raise
+					func_rewrite = rewrite_args_sig(func=func,exception=e)
+					result = func_rewrite(*args,**kwargs)
 		# option to use the debugger if we have ortho
 		except:
 			detail = pprint.pformat(dict(args=args,kwargs=kwargs))
@@ -430,7 +471,8 @@ def debugger_click(func,with_ctx=False):
 			if ctx.obj['DEBUG']:
 				debugger()
 			else: raise
-		else: return result
+		else: 
+			return result
 	wrapper.__name__ = func.__name__
 	wrapper.__doc__ = func.__doc__
 	return wrapper
