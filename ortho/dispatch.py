@@ -569,7 +569,7 @@ class DispatcherFunction:
 		#   cannot figure out how to get the class name, so in YAML load you 
 		#   would have to do some tricky guesswork
 		raise TypeError(
-			f'function for has no match for args={args}, kwargs={kwargs}. '
+			f'function has no match for args={args}, kwargs={kwargs}. '
 			'recall that you cannot use @dispatcher on class methods')
 
 def dispatcher(func):

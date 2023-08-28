@@ -15,7 +15,7 @@ import ruamel
 from ruamel.yaml import YAML,yaml_object
 
 test_seq = """\
---- !mydoc
+--- !mydoc_seq
 - !food
   name: sourdough
   raw: 100kcal energy, 30g serving
@@ -28,7 +28,7 @@ test_seq = """\
 """
 
 test_dict = """\
---- !mydoc
+--- !mydoc_dict
 sourdough: !food
   raw: 100kcal energy, 30g serving
 eggs:
@@ -40,7 +40,7 @@ eggs over easy:
 """
 
 test_seq_built = """\
-!mydoc
+!mydoc_seq
 - !food
   name: sourdough
   raw: 100kcal energy, 30g serving
@@ -55,7 +55,7 @@ test_seq_built = """\
 """
 
 test_dict_built = """\
-!mydoc
+!mydoc_dict
 sourdough: !food
   raw: 100kcal energy, 30g serving
 eggs: !food
@@ -80,12 +80,19 @@ class MyBuilder(Handler):
 			foods=foods,name=name)
 
 # the handler requires us to use the solve property to return an object
-builder_solved = lambda *args,**kwargs: MyBuilder(*args,**kwargs).solve
+builder_solved = lambda self,*args,**kwargs: MyBuilder(*args,**kwargs).solve
 
-class MyDocument(TrestleDocument): 
-	yaml_tag = '!mydoc'
+class MyDocumentSeq(TrestleDocument): 
+	yaml_tag = '!mydoc_seq'
 	# build objects from multiple dispatch on kwargs keys
-	builder = builder_solved
+	trestle_dispatcher = builder_solved
+	trestle_kind = list
+
+class MyDocumentDict(TrestleDocument): 
+	yaml_tag = '!mydoc_dict'
+	# build objects from multiple dispatch on kwargs keys
+	trestle_dispatcher = builder_solved
+	trestle_kind = dict
 
 class Food:
 	yaml_tag = '!food'
@@ -106,12 +113,13 @@ class OrthoYAMLOverrides(unittest.TestCase):
 		"""
 		yaml = YAML(typ='rt')
 		yaml.width = 80
-		yaml.register_class(MyDocument)
+		yaml.register_class(MyDocumentDict)
+		yaml.register_class(MyDocumentSeq)
 		yaml.register_class(Food)
 		yaml.register_class(Meal)
 		for test_text,built_text in [
 			(test_seq,test_seq_built),
-			(test_dict,test_dict_built)]:
+			(test_dict,test_dict_built),]:
 			doc = yaml.load(test_text)
 			buffer = io.BytesIO()
 			yaml.dump(doc,buffer)

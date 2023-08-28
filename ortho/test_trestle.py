@@ -35,7 +35,7 @@ import io
 import sys
 import unittest
 
-from . import build_trestle, BaseTrestle, TrestleDocument
+from . import build_trestle, Trestle, TrestleDocument
 from . import Dispatcher
 from . import build_trestle
 
@@ -74,7 +74,7 @@ class MyIndex(TrestleDocument):
 	Supervise index file.
 	"""
 	yaml_tag = '!my_doc'
-	builder = MyIndexBuilder
+	trestle_dispatcher = MyIndexBuilder
 
 	def post(self):
 		print('status: we are inside the special "post" hook for the '
@@ -86,7 +86,7 @@ class MyIndex(TrestleDocument):
 #   to build your document. It ensures that we can manage different input and 
 #   output types properly. This is the primary interface to the YAML library.
 
-class ScannerYAML(BaseTrestle):
+class ScannerYAML(Trestle):
 	"""Base class for round-trip YAML tagging and modification."""
 	pass
 
@@ -170,7 +170,9 @@ class TestTrestle(unittest.TestCase):
 	def test_trestle_basic(self):
 		# tests above are verbose so we suppress
 		sys.stdout = io.StringIO()
-		self.assertEqual(trestle_text(test_A_input),test_A_out)
+		l = trestle_text(test_A_input)
+		r = test_A_out
+		self.assertEqual(l,r)
 
 ### MAIN
 

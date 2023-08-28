@@ -235,7 +235,7 @@ class TrestleDocument(Trestle):
 			if args:
 				raise Exception(f'trestle document dict got args: {kwargs}')
 			data = {}
-			for key,child in kwargs:
+			for key,child in kwargs.items():
 				# pass through tagged objects
 				tag = getattr(child,'yaml_tag',None)
 				item = self.trestle_dispatcher(**child) if not tag else child
