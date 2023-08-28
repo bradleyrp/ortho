@@ -1,5 +1,5 @@
 NAME = ortho
-.PHONY: develop install check clean remove docs readdocs test citest
+.PHONY: develop install check clean remove docs readdocs test
 all:
 develop: venv
 	source venv/bin/activate && pip install -e '.[all]'
@@ -18,7 +18,6 @@ venv:
         echo "status: aborting" ; exit 1 ; \
     fi
 clean:
-	@echo "status: before removing a local venv we unlink in case it is linked"
 	unlink venv || :
 	rm -rf ./venv
 	rm -rf ./${NAME}.egg-info
@@ -34,7 +33,3 @@ readdocs:
 	open docs/build/html/index.html
 test:
 	source venv/bin/activate && python -m unittest
-citest:
-	python3 -m venv venv && \
-	source venv/bin/activate && \
-	pip install '.[all]'
