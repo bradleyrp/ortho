@@ -1,6 +1,21 @@
 NAME = ortho
-.PHONY: develop install check clean remove docs readdocs test
+
+# via https://stackoverflow.com/a/45810830
+ifdef VIRTUAL_ENV
+	ACTIVATE_ENV := true
+else
+	ACTIVATE_ENV := @if [ ! -d venv ]; then \
+		echo "error: no venv. use make install or develop" && exit 1; \
+		else source ./venv/bin/activate; fi
+endif
+
+define execute_in_env
+    $(ACTIVATE_ENV) && $1
+endef
+
 all:
+.PHONY: \
+	develop install check clean remove docs readdocs test
 develop: venv
 	source venv/bin/activate && pip install -e '.[all]'
 install: venv
@@ -32,4 +47,4 @@ docs:
 readdocs:
 	open docs/build/html/index.html
 test:
-	source venv/bin/activate && python -m unittest
+	$(call execute_in_env, python -m unittest)
