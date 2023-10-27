@@ -236,7 +236,7 @@ class TeeMultiplexer:
 		self.fd1.flush()
 		self.fd2.flush()
 
-def bash_basic(cmd,cwd=None,log=None):
+def bash_basic(cmd,cwd=None,log=None,announce=False):
 	"""
 	Simplest wrapper around bash which uses os.system. 
 	Note that the bash utility above is fully featured but sometimes produces weird output.
@@ -245,6 +245,9 @@ def bash_basic(cmd,cwd=None,log=None):
 	to move to the right spot, and tee to pipe output.
 	Note that the log file for this function is local to the cwd, in contrast to the standard bash above.
 	"""
+	if announce: 
+		print('status: ortho.bash%s runs command: %s'%(
+			' (at %s)'%cwd if cwd else '',str(cmd)))
 	if cwd is None:
 		cwd = os.getcwd()
 	if log:

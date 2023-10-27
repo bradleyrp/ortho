@@ -46,7 +46,7 @@ def delveset(o,*k,**kwargs):
 	value = kwargs.pop('value',None)
 	if value==None: raise Exception('delveset needs a value')
 	if kwargs: raise Exception('unprocessed kwargs %s'%str(kwargs))
-	if len(k)==0: raise Exception('deepset needs a path')
+	if len(k)==0: raise Exception('delveset needs a path')
 	elif len(k)==1: 
 		try: o[k[0]] = value
 		except Exception as e:

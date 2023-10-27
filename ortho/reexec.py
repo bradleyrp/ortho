@@ -352,10 +352,6 @@ def interact(script='dev.py',hooks=None,**kwargs):
 	vars.update(**vars.pop('out'))
 	readline.set_completer(rlcompleter.Completer(vars).complete)
 	# adding redundant completer for MacOS and linux, see comment elsewhere
-	if 0:
-		readline.parse_and_bind("tab: complete")
-		readline.parse_and_bind("bind ^I rl_complete")
-
 	if 'libedit' in readline.__doc__:
 		readline.parse_and_bind("bind ^I rl_complete")
 	else:
@@ -384,8 +380,10 @@ def debugger():
 	#       118098#issuecomment-1351499727
 	# adding redundant completer for MacOS and linux, see comment elsewhere
 	# dev: make the readline stuff more modular
-	readline.parse_and_bind("tab: complete")
-	readline.parse_and_bind("bind ^I rl_complete")
+	if 'libedit' in readline.__doc__:
+		readline.parse_and_bind("bind ^I rl_complete")
+	else:
+		readline.parse_and_bind("tab: complete")
 	# let the user know they are debugging
 	msg = "(auto debug in place)"
 	code.interact(local=ns,banner=msg)
