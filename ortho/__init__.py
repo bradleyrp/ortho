@@ -52,3 +52,4 @@ from .text_viewer import text_viewer
 #   may be redundant at this point
 from .logs import str_types
 from .dotdict import DotDict
+from .interface import clipboard_copy
