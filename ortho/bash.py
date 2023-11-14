@@ -16,15 +16,25 @@ def command_check(command,verbose=False):
 	if verbose:
 		print('[STATUS] checking command "%s"'%command)
 	try:
-		with open(os.devnull,'w') as FNULL:
-			proc = subprocess.Popen(command,
-				stdout=FNULL,stderr=FNULL,shell=True,executable='/bin/bash')
-			proc.communicate()
-			# return false whenever we cannot find the executable or run it
-			return proc.returncode not in [126,127]
-	except Exception as e: 
-		print('warning','caught exception on command_check: %s'%e)
-		return False
+		from shutil import which
+		return which(command) != None
+	except:
+		try:
+			with open(os.devnull,'w') as FNULL:
+				# deprecated because this hangs on commands that exist and hang
+				if 0:
+					proc = subprocess.Popen(command,
+						stdout=FNULL,stderr=FNULL,shell=True,
+						executable='/bin/bash')
+					proc.communicate()
+					# return false when we cannot find the executable or run it
+					return proc.returncode not in [126,127]
+				# use call directly instead
+				return subprocess.call(['which',command],
+					stdout=FNULL,stderr=FNULL) == 0
+		except Exception as e: 
+			print('warning','caught exception on command_check: %s'%e)
+			return False
 
 def reader(pipe,queue):
 	"""Target for threading for scrolling BASH function below."""
