@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+from .bash import command_check
+
 def clipboard_copy(text,method='manual'):
 	"""Wrap the clipboard copy mechanism."""
 	# note that using this on a linux cluster requires ForwardX11, and you may
