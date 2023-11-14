@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: noet:ts=4:sts=4:sw=4
 
+import subprocess
 from .bash import command_check
 
 def clipboard_copy(text,method='manual'):
