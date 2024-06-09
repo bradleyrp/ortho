@@ -14,27 +14,7 @@ import traceback
 import code
 import pprint
 
-def say(text,*flags):
-	"""Colorize the text."""
-	# three-digit codes. first is style (0,2 are regular, italics 3, bold 1)
-	colors = {
-		'gray':(0,37,48),
-		'cyan_black':(1,36,40),
-		'red_black':(1,31,40),
-		'black_gray':(0,37,40),
-		'white_black':(1,37,40),
-		'mag_gray':(0,35,47)}
-	# no colors if we are logging to a text file because nobody wants all that
-	#   unicode in a log
-	if flags and hasattr(sys.stdout,'isatty') and sys.stdout.isatty() is True:
-		if any(f for f in flags if f not in colors):
-			raise Exception('cannot find a color %s. try one of %s'%(
-				str(flags),colors.keys()))
-		for f in flags[::-1]:
-			style,fg,bg = colors[f]
-			text = '\x1b[%sm%s\x1b[0m'%(';'.join(
-				[str(style),str(fg),str(bg)]),text)
-	return text
+# ...!!! redo does not work at all
 
 def tracebacker_base(exc_type,exc_obj,exc_tb,debug=False):
 	"""Base handler `tracebacker`."""
@@ -174,9 +154,7 @@ class ReExec:
 		print('status: rerunning the script')
 		out = self.namespace
 		self.get_text()
-		# canny way to handle exceptions below. all exceptions visit this
-		try: exec(self.text,out,out)
-		except Exception as e: tracebacker(e)
+		exec(self.text,out,out)
 	def reload(self):
 		global preloaded_mods
 		preloaded_names = [i.__name__ for i in preloaded_mods]
@@ -206,7 +184,7 @@ class ReExec:
 			except: 
 				failures.append(module.__name__)
 		if failures:
-			print('warning','failed to reload: '+', '.join(failures))
+			print('warning: failed to reload: '+', '.join(failures))
 
 def iteratively_execute():
 	"""

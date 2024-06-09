@@ -74,7 +74,10 @@ class TrestleDocumentXXX:
 		else:
 			raise ValueError(f'invalid data type: {type(outgoing)}')
 
-def build_trestle(*,tags,yaml,get_text_completer=False):
+class ExceptionMissingTag(Exception):
+    pass
+
+def build_trestle(*,tags,yaml,get_text_completer=False,header=None):
 	"""
 	Inject custom YAML tags in a parser that will then complete or audit the 
 	file as the user constructs it.
@@ -104,7 +107,9 @@ def build_trestle(*,tags,yaml,get_text_completer=False):
 		# try to dump the file, now with tags
 		try: 
 			with open(path,'w') as fp:
-			 	yaml.dump(data,fp)
+				if header:
+					fp.write(header.strip('\n')+'\n')
+				yaml.dump(data,fp)
 		# rewrite the cached text if we cannot dump it to the file
 		except Exception as e:
 			print('warning: writing original data, exception incoming')
@@ -176,6 +181,9 @@ class Trestle:
 						f'exception when building class from yaml: '
 						f'{cls}: {e}')
 				raise
+			except ExceptionMissingTag as e:
+				print(f'warning: error calling class "{cls}" with data: {data}')
+				raise
 			return out
 		elif isinstance(node,ruamel.yaml.nodes.SequenceNode):
 			# nb this was the site of a tricky error in which we forgot to use
@@ -216,7 +224,8 @@ class TrestleDocument(Trestle):
 		Trestle class, which serializes the YAML.
 		"""
 		if self.yaml_tag == None:
-			raise Exception('this TrestleDocument requires a yaml_tag')
+			raise ExceptionMissingTag(
+				f'found a subclass of TrestleDocument that requires a yaml_tag')
 		if self.trestle_dispatcher == None:
 			raise Exception('define a trestle_dispatcher class attribute that '
 				'points to a Dispatcher which receives and builds the objects '

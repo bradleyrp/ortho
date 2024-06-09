@@ -149,6 +149,30 @@ test_A_input = """\
 """
 
 test_A_out = """\
+# hello
+!my_doc
+- !kind_a
+  a: 1
+  b: 2
+- !kind_b
+  e: 3
+  f: 4
+  g: 5
+"""
+
+test_A_input_header = """\
+---
+# obliterated
+!my_doc
+- a: 1
+  b: 2
+- e: 3
+  f: 4
+  g: 5
+"""
+
+test_A_out_header = """\
+# hello
 !my_doc
 - !kind_a
   a: 1
@@ -172,6 +196,18 @@ class TestTrestle(unittest.TestCase):
 		sys.stdout = io.StringIO()
 		l = trestle_text(test_A_input)
 		r = test_A_out
+		self.assertEqual(l,r)
+
+	def test_trestle_basic(self):
+		header = "# hello"
+		# tests above are verbose so we suppress
+		sys.stdout = io.StringIO()
+		trestle,trestle_text = build_trestle(
+			tags=tags_yaml_objects,
+			yaml=yaml,get_text_completer=True,
+			header=header)
+		l = header + '\n' + trestle_text(test_A_input_header)
+		r = test_A_out_header
 		self.assertEqual(l,r)
 
 ### MAIN
