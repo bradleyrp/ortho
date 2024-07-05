@@ -27,12 +27,16 @@ class SimpleFlock:
 	# recall that nix file locks are advisory
 	# this method is useful for protecting another file with a token lock file
 	# via: https://github.com/derpston/python-simpleflock
+	# later found updates when this started failing on rockfish and this 
+	#   prompted me to set the open mode
+	# via: https://gist.github.com/jirihnidek/430d45c54311661b47fb45a3a7846537
 	def __init__(self,path,timeout=None):
 		self.path = path
 		self.timeout = timeout
 		self.fd = None
 	def __enter__(self):
-		self.fd = os.open(self.path,os.O_CREAT)
+		open_mode = os.O_RDWR | os.O_CREAT | os.O_TRUNC
+		self.fd = os.open(self.path,open_mode)
 		start_t = time.time()
 		while True:
 			try:
