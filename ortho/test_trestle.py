@@ -149,7 +149,6 @@ test_A_input = """\
 """
 
 test_A_out = """\
-# hello
 !my_doc
 - !kind_a
   a: 1
@@ -191,7 +190,7 @@ class TestTrestle(unittest.TestCase):
 	"""
 	Test the "trestle" pattern.
 	"""
-	def test_trestle_basic(self):
+	def test_trestle_no_header(self):
 		# tests above are verbose so we suppress
 		sys.stdout = io.StringIO()
 		l = trestle_text(test_A_input)
